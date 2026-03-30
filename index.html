@@ -101,17 +101,16 @@
 </div>
 
 <script>
-    // 変数名を一新して競合を回避
-    const SHOP_DB_KEY = 'shop_vFinal_Clean';
-    let shopItems = JSON.parse(localStorage.getItem(SHOP_DB_KEY+'_i')) || [];
-    let shopHistory = JSON.parse(localStorage.getItem(SHOP_DB_KEY+'_h')) || [];
-    let shopTemplates = JSON.parse(localStorage.getItem(SHOP_DB_KEY+'_t')) || [];
+    const SHOP_KEY_V3 = 'shop_v3_clean';
+    let sItems = JSON.parse(localStorage.getItem(SHOP_KEY_V3+'_i')) || [];
+    let sHist = JSON.parse(localStorage.getItem(SHOP_KEY_V3+'_h')) || [];
+    let sTpls = JSON.parse(localStorage.getItem(SHOP_KEY_V3+'_t')) || [];
 
-    function saveAll() {
-        localStorage.setItem(SHOP_DB_KEY+'_i', JSON.stringify(shopItems));
-        localStorage.setItem(SHOP_DB_KEY+'_h', JSON.stringify(shopHistory));
-        localStorage.setItem(SHOP_DB_KEY+'_t', JSON.stringify(shopTemplates));
-        renderAll();
+    function save() {
+        localStorage.setItem(SHOP_KEY_V3+'_i', JSON.stringify(sItems));
+        localStorage.setItem(SHOP_KEY_V3+'_h', JSON.stringify(sHist));
+        localStorage.setItem(SHOP_KEY_V3+'_t', JSON.stringify(sTpls));
+        render();
     }
 
     function toggleButtons() {
@@ -119,29 +118,14 @@
         document.getElementById('tplBtn').classList.toggle('hidden', v === '');
     }
 
-    function addItem() {
+    function addItem(text = null) {
         const input = document.getElementById('itemInput');
-        if (!input.value.trim()) return;
-        shopItems.push({ id: Date.now(), text: input.value.trim(), checked: false, price: 0, tax: null });
+        const val = text || input.value.trim();
+        if (!val) return;
+        sItems.push({ id: Date.now(), text: val, checked: false, price: 0, tax: null });
         input.value = '';
         toggleButtons();
-        saveAll();
-    }
-
-    function editItemName(id) {
-        const item = shopItems.find(x => x.id === id);
-        const newName = prompt("名前を修正:", item.text);
-        if (newName && newName.trim()) {
-            item.text = newName.trim();
-            saveAll();
-        }
-    }
-
-    function clearChecked() {
-        if (confirm('チェック済みの項目を削除しますか？')) {
-            shopItems = shopItems.filter(i => !i.checked);
-            saveAll();
-        }
+        save();
     }
 
     function startVoice() {
@@ -151,53 +135,65 @@
         rec.onstart = () => document.getElementById('micBtn').classList.add('recording');
         rec.onend = () => document.getElementById('micBtn').classList.remove('recording');
         rec.onresult = (e) => {
-            document.getElementById('itemInput').value = e.results[0][0].transcript.replace(/[。．]$/, "");
-            toggleButtons();
+            const voiceResult = e.results[0][0].transcript.replace(/[。．]$/, "");
+            if (voiceResult) {
+                addItem(voiceResult); // 音声認識の結果を直接 addItem に渡して追加
+            }
         };
         rec.start();
     }
 
+    function editItemName(id) {
+        const item = sItems.find(x => x.id === id);
+        const newName = prompt("名前を修正:", item.text);
+        if (newName && newName.trim()) { item.text = newName.trim(); save(); }
+    }
+
+    function clearChecked() {
+        if (confirm('チェック済みを削除しますか？')) { sItems = sItems.filter(i => !i.checked); save(); }
+    }
+
     function archiveChecked() {
-        const checked = shopItems.filter(i => i.checked);
+        const checked = sItems.filter(i => i.checked);
         const total = checked.reduce((s, i) => s + Math.floor(i.price * (1 + (i.tax||0)/100)), 0);
         if (!checked.length || total === 0) return alert("金額入りのチェック済み項目がありません");
         const now = new Date();
-        shopHistory.unshift({
+        sHist.unshift({
             id: Date.now(), date: `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`,
             monthKey: `${now.getFullYear()}年${now.getMonth()+1}月`, total: total,
             items: checked.map(i => ({...i, fPrice: Math.floor(i.price * (1 + (i.tax||0)/100))}))
         });
-        shopItems = shopItems.filter(i => !i.checked);
-        saveAll();
+        sItems = sItems.filter(i => !i.checked);
+        save();
     }
 
-    function renderAll() {
+    function render() {
         const listEl = document.getElementById('shoppingList');
         const tplEl = document.getElementById('templateContainer');
         let currentTotal = 0;
 
-        tplEl.innerHTML = shopTemplates.map(t => `
-            <div class="chip" onclick="shopItems.push({id:Date.now(), text:'${t}', checked:false, price:0, tax:null}); saveAll();">
-                ＋${t} <span style="margin-left:5px; opacity:0.3" onclick="event.stopPropagation(); shopTemplates=shopTemplates.filter(x=>x!=='${t}'); saveAll();">×</span>
+        tplEl.innerHTML = sTpls.map(t => `
+            <div class="chip" onclick="addItem('${t}')">
+                ＋${t} <span style="margin-left:5px; opacity:0.3" onclick="event.stopPropagation(); sTpls=sTpls.filter(x=>x!=='${t}'); save();">×</span>
             </div>
         `).join('');
 
-        listEl.innerHTML = shopItems.map(i => {
+        listEl.innerHTML = sItems.map(i => {
             const taxed = Math.floor(i.price * (1 + (i.tax||0)/100));
             if (i.checked) currentTotal += taxed;
-            const prev = (function(){ for(let g of shopHistory){ let f=g.items.find(x=>x.text===i.text); if(f) return f.price; } return null; })();
+            const prev = (function(){ for(let g of sHist){ let f=g.items.find(x=>x.text===i.text); if(f) return f.price; } return null; })();
             return `
                 <div class="item-card">
                     <div class="item-main">
-                        <input type="checkbox" ${i.checked?'checked':''} onchange="shopItems.find(x=>x.id===${i.id}).checked=!${i.checked}; saveAll();" style="width:24px;height:24px;">
+                        <input type="checkbox" ${i.checked?'checked':''} onchange="sItems.find(x=>x.id===${i.id}).checked=!${i.checked}; save();" style="width:24px;height:24px;">
                         <span class="item-text" onclick="editItemName(${i.id})">${i.text}</span>
-                        <input type="number" inputmode="decimal" class="price-input" placeholder="税抜" value="${i.price||''}" onchange="shopItems.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; saveAll();">
-                        <button onclick="shopItems=shopItems.filter(x=>x.id!==${i.id}); saveAll();" style="border:none;background:none;color:#f87171;font-size:1.2rem;padding-left:10px;">✕</button>
+                        <input type="number" inputmode="decimal" class="price-input" placeholder="税抜" value="${i.price||''}" onchange="sItems.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
+                        <button onclick="sItems=sItems.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;font-size:1.2rem;padding-left:10px;">✕</button>
                     </div>
                     <div class="tax-controls">
-                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="shopItems.find(x=>x.id===${i.id}).tax=(shopItems.find(x=>x.id===${i.id}).tax===8?null:8); saveAll();">8%</button>
-                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="shopItems.find(x=>x.id===${i.id}).tax=(shopItems.find(x=>x.id===${i.id}).tax===10?null:10); saveAll();">10%</button>
-                        ${prev?`<span class="bottom-price-hint" onclick="shopItems.find(x=>x.id===${i.id}).price=${prev}; saveAll();">前回: ¥${prev}</span>`:''}
+                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="sItems.find(x=>x.id===${i.id}).tax=(sItems.find(x=>x.id===${i.id}).tax===8?null:8); save();">8%</button>
+                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="sItems.find(x=>x.id===${i.id}).tax=(sItems.find(x=>x.id===${i.id}).tax===10?null:10); save();">10%</button>
+                        ${prev?`<span class="bottom-price-hint" onclick="sItems.find(x=>x.id===${i.id}).price=${prev}; save();">前回: ¥${prev}</span>`:''}
                         <span class="final-price">税込 ¥${taxed.toLocaleString()}</span>
                     </div>
                 </div>
@@ -205,12 +201,12 @@
         }).join('');
 
         document.getElementById('totalPrice').innerText = currentTotal.toLocaleString();
-        document.getElementById('archiveBtn').disabled = (shopItems.filter(i=>i.checked).length === 0 || currentTotal === 0);
+        document.getElementById('archiveBtn').disabled = (sItems.filter(i=>i.checked).length === 0 || currentTotal === 0);
         
         const hList = document.getElementById('historyList');
         hList.innerHTML = '';
         const mData = {};
-        shopHistory.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
+        sHist.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
         Object.keys(mData).forEach(m => {
             const head = document.createElement('div'); head.className = 'month-header'; head.innerHTML = `<span>📅 ${m}</span><span>計 ¥${mData[m].t.toLocaleString()}</span>`;
             hList.appendChild(head);
@@ -218,14 +214,14 @@
                 const c = document.createElement('div'); c.className = 'card'; c.style.fontSize = '0.8rem';
                 c.innerHTML = `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:5px;"><span>${g.date}</span><b>¥${g.total.toLocaleString()}</b></div>
                     ${g.items.map(it => `<div style="display:flex; justify-content:space-between; opacity:0.7;"><span>・${it.text}</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
-                    <div style="text-align:right; margin-top:5px;"><button onclick="if(confirm('削除？')){shopHistory=shopHistory.filter(x=>x.id!==${g.id});saveAll();}" style="background:none;border:none;color:#f87171;font-size:0.7rem;">削除</button></div>`;
+                    <div style="text-align:right; margin-top:5px;"><button onclick="if(confirm('削除？')){sHist=sHist.filter(x=>x.id!==${g.id});save();}" style="background:none;border:none;color:#f87171;font-size:0.7rem;">削除</button></div>`;
                 hList.appendChild(c);
             });
         });
-        if (shopHistory.length === 0) hList.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴はありません</p>';
+        if (sHist.length === 0) hList.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴はありません</p>';
     }
 
-    function saveAsTemplate(text) { if(text && !shopTemplates.includes(text)){ shopTemplates.push(text); saveAll(); document.getElementById('itemInput').value=''; toggleButtons(); } }
+    function saveAsTemplate(text) { if(text && !sTpls.includes(text)){ sTpls.push(text); save(); document.getElementById('itemInput').value=''; toggleButtons(); } }
     function switchTab(t) { 
         document.getElementById('listView').classList.toggle('hidden', t!=='list');
         document.getElementById('historyView').classList.toggle('hidden', t!=='history');
@@ -233,7 +229,7 @@
         document.getElementById('tabHistory').className = `tab-btn ${t==='history'?'tab-active':''}`;
         document.getElementById('footerBar').classList.toggle('hidden', t!=='list');
     }
-    renderAll();
+    render();
 </script>
 </body>
 </html>
