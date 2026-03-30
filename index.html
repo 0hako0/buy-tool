@@ -6,8 +6,8 @@
     <title>お買い物リスト</title>
     
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="お買い物リスト">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
     
     <style>
@@ -54,6 +54,7 @@
         .total-amount { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
         .hidden { display: none; }
         .history-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
+        textarea { width: 100%; height: 60px; font-size: 0.7rem; margin: 5px 0; border-radius: 0.5rem; padding: 5px; }
     </style>
 </head>
 <body>
@@ -83,10 +84,13 @@
 
         <div style="margin-top:2rem; opacity:0.5; text-align:center;">
             <details>
-                <summary style="font-size:0.7rem; cursor:pointer;">データの保存・復元</summary>
-                <textarea id="backupData" style="width:100%;height:60px;font-size:0.7rem;margin-top:5px;"></textarea>
-                <button onclick="exportData()" style="font-size:0.7rem;">書出</button>
-                <button onclick="importData()" style="font-size:0.7rem;">読込</button>
+                <summary style="font-size:0.7rem; cursor:pointer;">設定・バックアップ (CSV/JSON)</summary>
+                <textarea id="dataExchange" placeholder="ここにJSONまたはCSVを貼り付け"></textarea>
+                <div style="display:flex; gap:5px; justify-content:center; margin-top:5px;">
+                    <button onclick="exportJSON()" style="font-size:0.65rem;">JSON書出</button>
+                    <button onclick="exportCSV()" style="font-size:0.65rem;">CSV保存</button>
+                    <button onclick="importData()" style="font-size:0.65rem;">データ読込</button>
+                </div>
             </details>
         </div>
     </div>
@@ -103,7 +107,7 @@
 </div>
 
 <script>
-    const STORAGE_KEY = 'shop_vFinal_PWA_Ready';
+    const STORAGE_KEY = 'shop_vFinal_CSV_Ready';
     let items = JSON.parse(localStorage.getItem(STORAGE_KEY+'_i')) || [];
     let hist = JSON.parse(localStorage.getItem(STORAGE_KEY+'_h')) || [];
     let tpls = JSON.parse(localStorage.getItem(STORAGE_KEY+'_t')) || [];
@@ -119,14 +123,11 @@
         const input = document.getElementById('itemInput');
         const val = text || input.value.trim();
         if (!val) return;
-
-        // 重複ガード
         if (!text && items.find(i => i.text === val && !i.checked)) {
             alert('「' + val + '」は既に入っています');
             input.value = '';
             return;
         }
-
         items.push({ id: Date.now(), text: val, checked: false, price: price, qty: qty, tax: tax });
         if(!text) input.value = '';
         save();
@@ -153,7 +154,7 @@
         if (!checked.length || total === 0) return alert("金額入りのチェック済みがありません");
         const now = new Date();
         hist.unshift({
-            id: Date.now(), date: `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`,
+            id: Date.now(), date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`,
             monthKey: `${now.getFullYear()}年${now.getMonth()+1}月`, total: total,
             items: checked.map(i => ({...i, fPrice: Math.floor((i.price * i.qty) * (1 + (i.tax||0)/100))}))
         });
@@ -161,15 +162,49 @@
         save();
     }
 
-    function clearChecked() {
-        if (confirm('チェック済を削除しますか？')) { items = items.filter(i => !i.checked); save(); }
+    function clearChecked() { if (confirm('チェック済を削除しますか？')) { items = items.filter(i => !i.checked); save(); } }
+
+    // --- CSV / JSON 機能 ---
+    function exportJSON() {
+        document.getElementById('dataExchange').value = JSON.stringify({i:items, h:hist, t:tpls});
+        alert("JSONをテキストエリアに出力しました");
     }
 
-    function exportData() { document.getElementById('backupData').value = JSON.stringify({i:items, h:hist, t:tpls}); alert("書出完了"); }
-    function importData() { 
-        try { 
-            const d = JSON.parse(document.getElementById('backupData').value);
-            if(confirm('上書きしますか？')) { items=d.i||[]; hist=d.h||[]; tpls=d.t||[]; save(); alert("復元完了"); }
+    function exportCSV() {
+        let csv = "日付,月,商品名,単価,数量,税率,税込合計\n";
+        hist.forEach(g => {
+            g.items.forEach(it => {
+                csv += `${g.date},${g.monthKey},${it.text},${it.price},${it.qty},${it.tax||0},${it.fPrice}\n`;
+            });
+        });
+        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `shopping_history_${new Date().toLocaleDateString()}.csv`;
+        a.click();
+    }
+
+    function importData() {
+        const raw = document.getElementById('dataExchange').value.trim();
+        if(!raw) return;
+        try {
+            if (raw.startsWith('{')) { // JSON
+                const d = JSON.parse(raw);
+                items=d.i||[]; hist=d.h||[]; tpls=d.t||[];
+            } else { // CSV簡易インポート（履歴のみ）
+                const lines = raw.split('\n').slice(1);
+                hist = [];
+                lines.forEach(l => {
+                    const [date, mKey, name, p, q, t, fp] = l.split(',');
+                    if(!name) return;
+                    let group = hist.find(g => g.date === date);
+                    if(!group) { group = { id: Date.now()+Math.random(), date: date, monthKey: mKey, total: 0, items: [] }; hist.push(group); }
+                    const itemObj = { text: name, price: parseInt(p), qty: parseInt(q), tax: parseInt(t), fPrice: parseInt(fp) };
+                    group.items.push(itemObj);
+                    group.total += itemObj.fPrice;
+                });
+            }
+            save(); alert("復元しました");
         } catch(e) { alert("形式エラー"); }
     }
 
@@ -192,13 +227,12 @@
                         <span class="item-text ${i.checked?'item-checked':''}" onclick="const n=prompt('修正', '${i.text}'); if(n){items.find(x=>x.id===${i.id}).text=n; save();}">${i.text}</span>
                         <button onclick="toggleFavorite('${i.text}')" class="btn-star ${tpls.includes(i.text)?'is-fav':''}">★</button>
                         <input type="number" inputmode="decimal" class="num-input" value="${i.qty}" onchange="items.find(x=>x.id===${i.id}).qty=parseInt(this.value)||1; save();">
-                        <span style="font-size:0.7rem; opacity:0.5">×</span>
                         <input type="number" inputmode="decimal" class="price-input" placeholder="単価" value="${i.price||''}" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
                         <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;font-size:1.2rem;">✕</button>
                     </div>
                     <div class="tax-controls">
-                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="items.find(x=>x.id===${i.id}).tax=(i.tax===8?null:8); save();">8%</button>
-                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="items.find(x=>x.id===${i.id}).tax=(i.tax===10?null:10); save();">10%</button>
+                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="const it=items.find(x=>x.id===${i.id}); it.tax=(it.tax===8?null:8); save();">8%</button>
+                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="const it=items.find(x=>x.id===${i.id}); it.tax=(it.tax===10?null:10); save();">10%</button>
                         ${prev?`<span style="font-size:0.6rem; color:var(--text-muted); text-decoration:underline;" onclick="items.find(x=>x.id===${i.id}).price=${prev}; save();">前回: ¥${prev}</span>`:''}
                         <span class="final-price">税込 ¥${taxed.toLocaleString()}</span>
                     </div>
