@@ -4,60 +4,210 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>お買い物メモ & 履歴</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .checked { text-decoration: line-through; color: #9ca3af; }
-        .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: bold; }
-        /* 音声入力中のアニメーション */
+        /* 基本設定 */
+        :root {
+            --primary: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg: #f9fafb;
+            --text-main: #1f2937;
+            --text-muted: #9ca3af;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100-screen;
+        }
+
+        .container {
+            max-width: 448px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin: 1.5rem 0;
+        }
+
+        /* タブ */
+        .tabs {
+            display: flex;
+            background: var(--white);
+            border-bottom: 1px solid #e5e7eb;
+            border-radius: 0.5rem 0.5rem 0 0;
+            overflow: hidden;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            margin-bottom: 1.5rem;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            background: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .tab-active {
+            border-bottom: 3px solid var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        /* 入力エリア */
+        .card {
+            background: var(--white);
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.5rem;
+            outline: none;
+        }
+
+        input[type="text"]:focus {
+            ring: 2px solid var(--primary);
+            border-color: var(--primary);
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1.25rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .mic-btn {
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0.25rem;
+            transition: transform 0.2s;
+        }
+
+        /* テンプレートチップ */
+        .template-section { margin-top: 1rem; }
+        .template-label { font-size: 10px; color: var(--text-muted); font-weight: bold; margin-bottom: 0.5rem; text-transform: uppercase; }
+        .template-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .chip {
+            background: #eff6ff;
+            color: var(--primary);
+            border: 1px solid #dbeafe;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        /* リストアイテム */
+        .list-container { display: flex; flex-direction: column; gap: 0.5rem; }
+        .category-title { font-size: 10px; font-weight: bold; color: #60a5fa; margin: 0.5rem 0 0.25rem 0.25rem; letter-spacing: 0.1em; }
+        
+        .item-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--white);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .item-content { display: flex; align-items: center; gap: 0.75rem; flex: 1; cursor: pointer; }
+        .checkbox { width: 1.25rem; height: 1.25rem; cursor: pointer; }
+        .checked { text-decoration: line-through; color: var(--text-muted); }
+
+        .btn-delete { color: #e5e7eb; border: none; background: none; font-size: 1.2rem; cursor: pointer; }
+        .btn-delete:hover { color: #f87171; }
+
+        /* フッターボタン */
+        .archive-btn {
+            background: #1f2937;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 9999px;
+            border: none;
+            font-size: 0.875rem;
+            margin-top: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* 履歴 */
+        .hidden { display: none; }
+        .history-item { opacity: 0.8; border: 1px dashed #d1d5db; background: rgba(255,255,255,0.6); }
+
+        /* アニメーション */
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
-        .recording { animation: pulse 1s infinite; color: #ef4444 !important; }
+        .recording { animation: pulse 1s infinite; color: #ef4444; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body>
 
-    <div class="max-w-md mx-auto p-4">
-        <h1 class="text-2xl font-bold text-center my-6 text-gray-800">🛒 お買い物アシスト</h1>
+    <div class="container">
+        <h1>🛒 お買い物アシスト</h1>
 
-        <div class="flex border-b mb-6 text-center bg-white rounded-t-lg shadow-sm">
-            <button onclick="switchTab('list')" id="tabList" class="flex-1 py-3 tab-active">リスト</button>
-            <button onclick="switchTab('history')" id="tabHistory" class="flex-1 py-3 text-gray-500">履歴</button>
+        <div class="tabs">
+            <button onclick="switchTab('list')" id="tabList" class="tab-btn tab-active">リスト</button>
+            <button onclick="switchTab('history')" id="tabHistory" class="tab-btn">履歴</button>
         </div>
 
         <div id="listView">
-            <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
-                <div class="flex gap-2 items-center">
-                    <input type="text" id="itemInput" placeholder="何を買う？" 
-                        class="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <button onclick="startVoice()" id="micBtn" class="text-gray-400 p-2 text-2xl transition-all" title="音声入力">🎙️</button>
-                    <button onclick="addItem()" class="bg-blue-500 text-white px-5 py-2 rounded-lg font-bold">追加</button>
+            <div class="card">
+                <div class="input-group">
+                    <input type="text" id="itemInput" placeholder="何を買う？">
+                    <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
+                    <button onclick="addItem()" class="btn-add">追加</button>
                 </div>
-                
-                <div class="mt-4">
-                    <p class="text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">いつもの定番品</p>
-                    <div class="flex flex-wrap gap-2">
-                        <button onclick="addTemplate('牛乳')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋牛乳</button>
-                        <button onclick="addTemplate('卵')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋卵</button>
-                        <button onclick="addTemplate('パン')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋パン</button>
-                        <button onclick="addTemplate('納豆')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋納豆</button>
-                        <button onclick="addTemplate('豆腐')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋豆腐</button>
+                <div class="template-section">
+                    <p class="template-label">いつもの定番品</p>
+                    <div class="template-container">
+                        <button onclick="addTemplate('牛乳')" class="chip">＋牛乳</button>
+                        <button onclick="addTemplate('卵')" class="chip">＋卵</button>
+                        <button onclick="addTemplate('パン')" class="chip">＋パン</button>
+                        <button onclick="addTemplate('納豆')" class="chip">＋納豆</button>
                     </div>
                 </div>
             </div>
 
-            <div id="shoppingList" class="space-y-4 text-sm"></div>
+            <div id="shoppingList" class="list-container"></div>
 
-            <div class="mt-8 text-center">
-                <button onclick="archiveChecked()" class="bg-gray-800 text-white px-6 py-2 rounded-full text-sm shadow-md hover:bg-gray-700 transition">
-                    チェック済みを履歴へ移動
-                </button>
+            <div style="text-align: center;">
+                <button onclick="archiveChecked()" class="archive-btn">チェック済みを履歴へ移動</button>
             </div>
         </div>
 
         <div id="historyView" class="hidden">
-            <p class="text-xs text-center text-gray-500 mb-4">過去に買ったものです。タップでリストに戻せます。</p>
-            <div id="historyList" class="space-y-2 opacity-80"></div>
-            <div class="mt-8 text-center">
-                <button onclick="clearHistory()" class="text-xs text-red-400 hover:underline">履歴をすべて消去</button>
+            <p style="text-align: center; color: #6b7280; font-size: 0.75rem; margin-bottom: 1rem;">過去に買ったものです。タップで復活。</p>
+            <div id="historyList" class="list-container"></div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <button onclick="clearHistory()" style="color: #f87171; border: none; background: none; font-size: 0.75rem; text-decoration: underline; cursor: pointer;">履歴をすべて消去</button>
             </div>
         </div>
     </div>
@@ -66,12 +216,11 @@
         let items = JSON.parse(localStorage.getItem('shopping_items')) || [];
         let history = JSON.parse(localStorage.getItem('shopping_history')) || [];
 
-        // カテゴリ辞書
         const categories = {
-            '野菜・果物': ['にんじん', 'たまねぎ', 'キャベツ', 'レタス', 'バナナ', 'リンゴ', 'トマト', 'きゅうり', 'ねぎ'],
-            '肉・魚': ['肉', '鶏', '牛', '豚', 'ミンチ', '魚', '刺身', '鮭', 'サバ'],
+            '野菜・果物': ['にんじん', 'たまねぎ', 'キャベツ', 'レタス', 'バナナ', 'リンゴ', 'トマト', 'きゅうり'],
+            '肉・魚': ['肉', '鶏', '牛', '豚', 'ミンチ', '魚', '刺身'],
             '乳製品・卵': ['牛乳', '卵', 'チーズ', 'バター', 'ヨーグルト'],
-            '日用品': ['洗剤', 'ティッシュ', 'ペーパー', 'シャンプー', '石鹸', '電池']
+            '日用品': ['洗剤', 'ティッシュ', 'ペーパー', 'シャンプー']
         };
 
         function save() {
@@ -80,7 +229,6 @@
             render();
         }
 
-        // 1. 「いつもの」登録
         function addTemplate(name) {
             items.push({ id: Date.now(), text: name, checked: false });
             save();
@@ -94,24 +242,17 @@
             save();
         }
 
-        // 3. 音声入力機能
         function startVoice() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-                alert("お使いのブラウザは音声入力に対応していません。");
-                return;
-            }
+            if (!SpeechRecognition) return alert("非対応ブラウザです");
             const recognition = new SpeechRecognition();
             recognition.lang = 'ja-JP';
             const micBtn = document.getElementById('micBtn');
-
             recognition.onstart = () => micBtn.classList.add('recording');
             recognition.onend = () => micBtn.classList.remove('recording');
-
             recognition.onresult = (event) => {
-                const text = event.results[0][0].transcript;
-                document.getElementById('itemInput').value = text;
-                addItem(); // 認識したらそのまま追加
+                document.getElementById('itemInput').value = event.results[0][0].transcript;
+                addItem();
             };
             recognition.start();
         }
@@ -123,10 +264,9 @@
 
         function archiveChecked() {
             const checkedItems = items.filter(item => item.checked);
-            if (checkedItems.length === 0) return;
-            history = [...checkedItems.map(i => ({...i, checked: false})), ...history];
+            if (!checkedItems.length) return;
+            history = [...checkedItems.map(i => ({...i, checked: false})), ...history].slice(0, 50);
             items = items.filter(item => !item.checked);
-            history = history.slice(0, 50);
             save();
         }
 
@@ -138,22 +278,21 @@
             switchTab('list');
         }
 
-        function deleteItem(id, listType) {
-            if (listType === 'items') items = items.filter(i => i.id !== id);
+        function deleteItem(id, type) {
+            if (type === 'items') items = items.filter(i => i.id !== id);
             else history = history.filter(i => i.id !== id);
             save();
         }
 
-        function clearHistory() { if(confirm('履歴を空にしますか？')) { history = []; save(); } }
+        function clearHistory() { if(confirm('消去しますか？')) { history = []; save(); } }
 
         function switchTab(tab) {
             document.getElementById('listView').classList.toggle('hidden', tab !== 'list');
             document.getElementById('historyView').classList.toggle('hidden', tab !== 'history');
-            document.getElementById('tabList').className = `flex-1 py-3 ${tab === 'list' ? 'tab-active' : 'text-gray-500'}`;
-            document.getElementById('tabHistory').className = `flex-1 py-3 ${tab === 'history' ? 'tab-active' : 'text-gray-500'}`;
+            document.getElementById('tabList').className = `tab-btn ${tab === 'list' ? 'tab-active' : ''}`;
+            document.getElementById('tabHistory').className = `tab-btn ${tab === 'history' ? 'tab-active' : ''}`;
         }
 
-        // 2. カテゴリ判定関数
         function getCategory(text) {
             for (const [cat, keywords] of Object.entries(categories)) {
                 if (keywords.some(k => text.includes(k))) return cat;
@@ -165,11 +304,8 @@
             const listEl = document.getElementById('shoppingList');
             const historyEl = document.getElementById('historyList');
             
-            // リスト表示（カテゴリ別にグループ化）
-            listEl.innerHTML = '';
-            if (items.length === 0) {
-                listEl.innerHTML = '<p class="text-center text-gray-400 py-10">リストは空です</p>';
-            } else {
+            listEl.innerHTML = items.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">リストは空です</p>';
+            if (items.length) {
                 const grouped = items.reduce((acc, item) => {
                     const cat = getCategory(item.text);
                     if (!acc[cat]) acc[cat] = [];
@@ -177,43 +313,40 @@
                     return acc;
                 }, {});
 
-                // カテゴリ順に表示
                 for (const [cat, catItems] of Object.entries(grouped)) {
-                    const catTitle = document.createElement('p');
-                    catTitle.className = "text-[10px] font-bold text-blue-400 ml-1 uppercase tracking-widest";
-                    catTitle.innerText = cat;
-                    listEl.appendChild(catTitle);
+                    const title = document.createElement('p');
+                    title.className = "category-title";
+                    title.innerText = cat;
+                    listEl.appendChild(title);
 
                     catItems.forEach(item => {
                         const div = document.createElement('div');
-                        div.className = "flex items-center justify-between bg-white p-4 rounded-lg shadow-sm mb-2";
+                        div.className = "item-card";
                         div.innerHTML = `
-                            <div class="flex items-center gap-3 flex-1" onclick="toggleCheck(${item.id})">
-                                <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-5 h-5 rounded border-gray-300 text-blue-500 pointer-events-none">
-                                <p class="font-medium ${item.checked ? 'checked' : ''}">${item.text}</p>
+                            <div class="item-content" onclick="toggleCheck(${item.id})">
+                                <input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox">
+                                <span class="${item.checked ? 'checked' : ''}">${item.text}</span>
                             </div>
-                            <button onclick="deleteItem(${item.id}, 'items')" class="text-gray-200 hover:text-red-400 px-2">✕</button>
+                            <button onclick="deleteItem(${item.id}, 'items')" class="btn-delete">✕</button>
                         `;
                         listEl.appendChild(div);
                     });
                 }
             }
 
-            // 履歴表示（シンプルに）
-            historyEl.innerHTML = history.length ? '' : '<p class="text-center text-gray-400 py-10">履歴はありません</p>';
+            historyEl.innerHTML = history.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
             history.forEach(item => {
                 const div = document.createElement('div');
-                div.className = "flex items-center justify-between bg-white/60 p-3 rounded-lg border border-dashed border-gray-300";
+                div.className = "item-card history-item";
                 div.innerHTML = `
-                    <div class="flex-1 py-1" onclick="restoreItem(${item.id})">
-                        <p class="text-gray-600 text-sm">↩️ ${item.text}</p>
+                    <div class="item-content" onclick="restoreItem(${item.id})">
+                        <span style="font-size:0.875rem;color:#4b5563;">↩️ ${item.text}</span>
                     </div>
-                    <button onclick="deleteItem(${item.id}, 'history')" class="text-gray-200 hover:text-red-400 px-2">✕</button>
+                    <button onclick="deleteItem(${item.id}, 'history')" class="btn-delete">✕</button>
                 `;
                 historyEl.appendChild(div);
             });
         }
-
         render();
     </script>
 </body>
