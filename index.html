@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>お買い物リスト</title>
+    <title>お買い物プロ</title>
 
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="お買い物リスト">
+    <meta name="apple-mobile-web-app-title" content="お買い物メモ">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1f2937">
 
     <style>
         :root {
@@ -71,12 +73,21 @@
         }
 
         .item-card { 
-            display: flex; align-items: center; background: var(--white); padding: 0.75rem; 
+            display: flex; flex-direction: column; background: var(--white); padding: 0.75rem; 
             border-radius: 0.5rem; box-shadow: 0 1px 2px var(--card-shadow); margin-bottom: 0.5rem;
         }
-        .item-content { flex: 1; display: flex; align-items: center; gap: 0.5rem; overflow: hidden; }
+        .item-main { display: flex; align-items: center; gap: 0.5rem; width: 100%; }
         .item-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 1rem; }
-        .price-input { width: 70px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; font-size: 0.85rem; text-align: right; outline-color: var(--primary); }
+        
+        .tax-controls { display: flex; gap: 4px; margin-top: 8px; align-items: center; }
+        .tax-btn { 
+            font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #d1d5db; 
+            background: var(--bg); color: var(--text-muted); cursor: pointer;
+        }
+        .tax-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .final-price { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-left: auto; }
+
+        .price-input { width: 80px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; font-size: 0.85rem; text-align: right; outline-color: var(--primary); }
         
         .item-actions { display: flex; gap: 0.2rem; align-items: center; margin-left: 8px; }
         .btn-star { border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 1.1rem; padding: 4px; }
@@ -85,7 +96,6 @@
 
         .checked { text-decoration: line-through; color: var(--text-muted); opacity: 0.6; }
 
-        /* 履歴用のスタイル */
         .history-group { margin-bottom: 1.5rem; }
         .history-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: bold; padding: 0.5rem; color: var(--text-muted); border-bottom: 1px solid var(--text-muted); margin-bottom: 0.5rem; }
         .history-total { color: var(--accent); }
@@ -108,7 +118,7 @@
 
     <div class="container">
         <div class="header">
-            <h1>🛒 お買い物リスト</h1>
+            <h1>🛒 お買い物プロ</h1>
             <button onclick="shareList()" class="share-btn">📤</button>
         </div>
 
@@ -143,28 +153,34 @@
     </div>
 
     <div class="footer-bar">
-        <div><span class="total-label">チェック済合計:</span></div>
+        <div><span class="total-label">税込合計:</span></div>
         <div><span class="total-amount">¥ <span id="totalPrice">0</span></span></div>
     </div>
 
     <script>
-        // バージョンを上げて保存先を整理
-        let items = JSON.parse(localStorage.getItem('shop_items_v4')) || [];
-        let historyGroups = JSON.parse(localStorage.getItem('shop_hist_v4')) || [];
-        let myTemplates = JSON.parse(localStorage.getItem('shop_tpl_v4')) || [];
+        let items = JSON.parse(localStorage.getItem('shop_items_v5')) || [];
+        let historyGroups = JSON.parse(localStorage.getItem('shop_hist_v5')) || [];
+        let myTemplates = JSON.parse(localStorage.getItem('shop_tpl_v5')) || [];
 
         function save() {
-            localStorage.setItem('shop_items_v4', JSON.stringify(items));
-            localStorage.setItem('shop_hist_v4', JSON.stringify(historyGroups));
-            localStorage.setItem('shop_tpl_v4', JSON.stringify(myTemplates));
+            localStorage.setItem('shop_items_v5', JSON.stringify(items));
+            localStorage.setItem('shop_hist_v5', JSON.stringify(historyGroups));
+            localStorage.setItem('shop_tpl_v5', JSON.stringify(myTemplates));
             render();
+        }
+
+        // 税率込みの単価を計算する関数
+        function calculateTaxedPrice(price, taxRate) {
+            if (!taxRate) return price;
+            return Math.floor(price * (1 + taxRate / 100));
         }
 
         function addItem() {
             const input = document.getElementById('itemInput');
             const text = input.value.trim();
             if (!text) return;
-            items.push({ id: Date.now(), text, checked: false, price: 0 });
+            // tax: null(なし), 8, 10
+            items.push({ id: Date.now(), text, checked: false, price: 0, tax: null });
             input.value = '';
             toggleButtons();
             save();
@@ -172,6 +188,11 @@
 
         function updatePrice(id, price) {
             items = items.map(i => i.id === id ? { ...i, price: parseInt(price) || 0 } : i);
+            save();
+        }
+
+        function toggleTax(id, rate) {
+            items = items.map(i => i.id === id ? { ...i, tax: i.tax === rate ? null : rate } : i);
             save();
         }
 
@@ -209,36 +230,39 @@
             }
         }
 
-        // チェック済みを「まとめて」履歴へ移動
         function archiveChecked() {
             const checkedItems = items.filter(i => i.checked);
-            if (checkedItems.length === 0) return;
+            
+            // ガード処理: アイテムがない、または合計が0の場合は保存しない
+            const total = checkedItems.reduce((sum, i) => sum + calculateTaxedPrice(i.price, i.tax), 0);
+            
+            if (checkedItems.length === 0) {
+                alert("チェックを入れたアイテムがありません");
+                return;
+            }
+            if (total === 0) {
+                alert("金額が入力されていないため履歴に保存できません");
+                return;
+            }
 
-            const total = checkedItems.reduce((sum, i) => sum + i.price, 0);
             const now = new Date();
             const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
 
-            // 履歴にグループとして追加
             historyGroups.unshift({
                 id: Date.now(),
                 date: dateStr,
                 total: total,
-                items: checkedItems
+                items: checkedItems.map(i => ({...i, finalPrice: calculateTaxedPrice(i.price, i.tax)}))
             });
 
-            // リストから削除
             items = items.filter(i => !i.checked);
-            
-            // 履歴は直近20件くらいに制限
-            if (historyGroups.length > 20) historyGroups.pop();
-            
+            if (historyGroups.length > 30) historyGroups.pop();
             save();
         }
 
         function restoreGroup(groupId) {
             const group = historyGroups.find(g => g.id === groupId);
             if (group) {
-                // IDを新しくしてリストに戻す
                 group.items.forEach(item => {
                     items.push({ ...item, id: Date.now() + Math.random(), checked: false });
                 });
@@ -249,8 +273,10 @@
         }
 
         function deleteGroup(groupId) {
-            historyGroups = historyGroups.filter(g => g.id !== groupId);
-            save();
+            if(confirm('この履歴を削除しますか？')) {
+                historyGroups = historyGroups.filter(g => g.id !== groupId);
+                save();
+            }
         }
 
         function render() {
@@ -258,29 +284,34 @@
             const tplEl = document.getElementById('templateContainer');
             let total = 0;
 
-            // 定番
             tplEl.innerHTML = myTemplates.map(t => `
-                <div class="chip" onclick="items.push({id:Date.now(), text:'${t}', checked:false, price:0}); save();">
+                <div class="chip" onclick="items.push({id:Date.now(), text:'${t}', checked:false, price:0, tax:null}); save();">
                     ＋${t} <span style="margin-left:5px; opacity:0.5" onclick="removeTemplate(event, '${t}')">×</span>
                 </div>
             `).join('') || '<p style="color:#d1d5db;font-size:0.7rem;">定番を登録してください</p>';
 
-            // リスト表示
             listEl.innerHTML = '';
             items.forEach((item) => {
-                if (item.checked) total += item.price;
+                const taxed = calculateTaxedPrice(item.price, item.tax);
+                if (item.checked) total += taxed;
+                
                 const div = document.createElement('div');
                 div.className = `item-card ${item.checked ? 'checked' : ''}`;
                 div.innerHTML = `
-                    <div class="item-content">
+                    <div class="item-main">
                         <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${item.id})" class="checkbox">
                         <span class="item-text" onclick="toggleCheck(${item.id})">${item.text}</span>
-                        <input type="number" inputmode="decimal" class="price-input" placeholder="¥" value="${item.price || ''}" 
+                        <input type="number" inputmode="decimal" class="price-input" placeholder="税抜" value="${item.price || ''}" 
                                onchange="updatePrice(${item.id}, this.value)" onclick="event.stopPropagation()">
+                        <div class="item-actions">
+                            <button onclick="saveAsTemplate('${item.text}')" class="btn-star ${myTemplates.includes(item.text) ? 'active' : ''}">★</button>
+                            <button onclick="deleteItem(${item.id})" class="btn-delete">✕</button>
+                        </div>
                     </div>
-                    <div class="item-actions">
-                        <button onclick="saveAsTemplate('${item.text}')" class="btn-star ${myTemplates.includes(item.text) ? 'active' : ''}">★</button>
-                        <button onclick="deleteItem(${item.id})" class="btn-delete">✕</button>
+                    <div class="tax-controls">
+                        <button class="tax-btn ${item.tax === 8 ? 'active' : ''}" onclick="toggleTax(${item.id}, 8)">8%</button>
+                        <button class="tax-btn ${item.tax === 10 ? 'active' : ''}" onclick="toggleTax(${item.id}, 10)">10%</button>
+                        ${item.tax ? `<span class="final-price">税込 ¥${taxed.toLocaleString()}</span>` : ''}
                     </div>
                 `;
                 listEl.appendChild(div);
@@ -288,23 +319,24 @@
 
             document.getElementById('totalPrice').innerText = total.toLocaleString();
             
-            // 履歴表示（グループ化）
             const histEl = document.getElementById('historyList');
             histEl.innerHTML = historyGroups.map(group => `
                 <div class="history-group">
                     <div class="history-header">
                         <span>📅 ${group.date}</span>
-                        <span class="history-total">合計 ¥${group.total.toLocaleString()}</span>
+                        <span class="history-total">税込合計 ¥${group.total.toLocaleString()}</span>
                     </div>
                     ${group.items.map(i => `
                         <div class="item-card" style="opacity:0.6; font-size:0.8rem; padding:0.4rem 0.75rem; margin-bottom:2px;">
-                            <span style="flex:1">・${i.text}</span>
-                            <span>¥${i.price.toLocaleString()}</span>
+                            <div style="display:flex; justify-content:space-between; width:100%;">
+                                <span>・${i.text} ${i.tax ? `<small>(${i.tax}%)</small>` : ''}</span>
+                                <span>¥${(i.finalPrice || i.price || 0).toLocaleString()}</span>
+                            </div>
                         </div>
                     `).join('')}
-                    <div style="text-align:right; margin-top:4px;">
-                        <button onclick="restoreGroup(${group.id})" style="background:none; border:none; color:var(--primary); font-size:0.7rem;">↩️ リストに戻す</button>
-                        <button onclick="deleteGroup(${group.id})" style="background:none; border:none; color:#f87171; font-size:0.7rem; margin-left:10px;">✕ 削除</button>
+                    <div style="text-align:right; margin-top:4px; padding-right:5px;">
+                        <button onclick="restoreGroup(${group.id})" style="background:none; border:none; color:var(--primary); font-size:0.7rem; cursor:pointer;">↩️ リストに戻す</button>
+                        <button onclick="deleteGroup(${group.id})" style="background:none; border:none; color:#f87171; font-size:0.7rem; margin-left:10px; cursor:pointer;">✕ 削除</button>
                     </div>
                 </div>
             `).join('') || '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
@@ -312,7 +344,7 @@
 
         function deleteItem(id) { items = items.filter(i => i.id !== id); save(); }
         function toggleButtons() { const v = document.getElementById('itemInput').value.trim(); document.getElementById('tplBtn').classList.toggle('hidden', v===''); }
-        function clearHistory() { if(confirm('履歴をすべて消去しますか？')) { historyGroups=[]; save(); } }
+        function clearHistory() { if(confirm('すべての履歴を消去しますか？')) { historyGroups=[]; save(); } }
         function switchTab(tab) { 
             document.getElementById('listView').classList.toggle('hidden', tab!=='list');
             document.getElementById('historyView').classList.toggle('hidden', tab!=='history');
@@ -321,7 +353,7 @@
         }
         function startVoice() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) return;
+            if (!SpeechRecognition) return alert("お使いのブラウザは音声認識に対応していません");
             const rec = new SpeechRecognition(); rec.lang = 'ja-JP';
             rec.onstart = () => document.getElementById('micBtn').classList.add('recording');
             rec.onend = () => document.getElementById('micBtn').classList.remove('recording');
