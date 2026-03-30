@@ -30,31 +30,29 @@
         .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px var(--card-shadow); margin-bottom: 1rem; }
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
         input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 16px; outline: none; }
-        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
-        .mic-btn.recording { animation: pulse 1s infinite; color: #ef4444; }
-        @keyframes pulse { 0% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; transition: transform 0.2s; }
+        .mic-btn.recording { animation: pulse 1s infinite; color: #ef4444; transform: scale(1.2); }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; }
-        .template-container { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 10px; }
-        .chip { display: flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe; }
-        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding: 0 0.5rem; }
-        .btn-clear { font-size: 0.7rem; color: #ef4444; background: none; border: 1px solid #fee2e2; padding: 2px 8px; border-radius: 4px; }
+        
+        /* 月の合計バーの修正 */
+        .month-summary-bar { background: #374151; color: #ffffff; padding: 0.5rem 1rem; border-radius: 0.5rem; margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        
         .item-card { display: flex; flex-direction: column; background: var(--white); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px var(--card-shadow); }
         .item-main { display: flex; align-items: center; gap: 0.4rem; }
         .item-text { flex: 1; font-size: 1rem; cursor: pointer; }
         .item-checked { text-decoration: line-through; color: var(--text-muted); opacity: 0.6; }
-        .tax-controls { display: flex; gap: 8px; margin-top: 8px; align-items: center; flex-wrap: wrap; }
         .tax-btn { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #d1d5db; background: var(--bg); color: var(--text-muted); cursor: pointer; }
         .tax-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .final-price { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-left: auto; }
-        .num-input { width: 45px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: center; font-size: 0.85rem; }
-        .price-input { width: 70px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: right; font-size: 0.85rem; }
-        .btn-star { background: none; border: none; font-size: 1.1rem; cursor: pointer; color: #d1d5db; }
-        .btn-star.is-fav { color: var(--fav); }
+        .num-input { width: 40px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: center; font-size: 0.85rem; }
+        .price-input { width: 65px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: right; font-size: 0.85rem; }
         .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 100; }
         .total-amount { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
         .hidden { display: none; }
-        .history-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
+        .history-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
         textarea { width: 100%; height: 60px; font-size: 0.7rem; margin: 5px 0; border-radius: 0.5rem; padding: 5px; }
+        .chip { display: flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe; }
     </style>
 </head>
 <body>
@@ -74,29 +72,23 @@
                 <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
                 <button onclick="addItem()" id="addBtn" class="btn-add">追加</button>
             </div>
-            <div id="templateContainer" class="template-container"></div>
-        </div>
-        <div class="list-header">
-            <span style="font-size:0.65rem; color:var(--text-muted);">★定番 / 数 × 単価 (税別)</span>
-            <button onclick="clearChecked()" class="btn-clear">済を削除</button>
+            <div id="templateContainer" style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:10px;"></div>
         </div>
         <div id="shoppingList"></div>
-
         <div style="margin-top:2rem; opacity:0.5; text-align:center;">
             <details>
-                <summary style="font-size:0.7rem; cursor:pointer;">設定・バックアップ (CSV/JSON)</summary>
-                <textarea id="dataExchange" placeholder="ここにJSONまたはCSVを貼り付け"></textarea>
+                <summary style="font-size:0.7rem; cursor:pointer;">設定・バックアップ</summary>
+                <textarea id="dataExchange" placeholder="JSON/CSVデータ"></textarea>
                 <div style="display:flex; gap:5px; justify-content:center; margin-top:5px;">
-                    <button onclick="exportJSON()" style="font-size:0.65rem;">JSON書出</button>
+                    <button onclick="exportJSON()" style="font-size:0.65rem;">JSON</button>
                     <button onclick="exportCSV()" style="font-size:0.65rem;">CSV保存</button>
-                    <button onclick="importData()" style="font-size:0.65rem;">データ読込</button>
+                    <button onclick="importData()" style="font-size:0.65rem;">読込</button>
                 </div>
             </details>
         </div>
     </div>
 
     <div id="historyView" class="hidden">
-        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px; text-align:center;">タップで再追加</div>
         <div id="historyList"></div>
     </div>
 </div>
@@ -107,7 +99,7 @@
 </div>
 
 <script>
-    const STORAGE_KEY = 'shop_vFinal_CSV_Ready';
+    const STORAGE_KEY = 'shop_vFinal_UIFix';
     let items = JSON.parse(localStorage.getItem(STORAGE_KEY+'_i')) || [];
     let hist = JSON.parse(localStorage.getItem(STORAGE_KEY+'_h')) || [];
     let tpls = JSON.parse(localStorage.getItem(STORAGE_KEY+'_t')) || [];
@@ -120,21 +112,11 @@
     }
 
     function addItem(text = null, qty = 1, price = 0, tax = null) {
-        const input = document.getElementById('itemInput');
-        const val = text || input.value.trim();
+        const val = text || document.getElementById('itemInput').value.trim();
         if (!val) return;
-        if (!text && items.find(i => i.text === val && !i.checked)) {
-            alert('「' + val + '」は既に入っています');
-            input.value = '';
-            return;
-        }
+        if (!text && items.find(i => i.text === val && !i.checked)) { alert('既に入っています'); return; }
         items.push({ id: Date.now(), text: val, checked: false, price: price, qty: qty, tax: tax });
-        if(!text) input.value = '';
-        save();
-    }
-
-    function toggleFavorite(text) {
-        tpls = tpls.includes(text) ? tpls.filter(t => t !== text) : [...tpls, text];
+        if(!text) document.getElementById('itemInput').value = '';
         save();
     }
 
@@ -142,8 +124,10 @@
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return;
         const rec = new SpeechRecognition(); rec.lang = 'ja-JP';
-        rec.onstart = () => document.getElementById('micBtn').classList.add('recording');
-        rec.onend = () => document.getElementById('micBtn').classList.remove('recording');
+        const btn = document.getElementById('micBtn');
+        rec.onstart = () => btn.classList.add('recording');
+        rec.onend = () => btn.classList.remove('recording');
+        rec.onerror = () => btn.classList.remove('recording');
         rec.onresult = (e) => addItem(e.results[0][0].transcript.replace(/[。．]$/, ""));
         rec.start();
     }
@@ -151,7 +135,7 @@
     function archiveChecked() {
         const checked = items.filter(i => i.checked);
         const total = checked.reduce((s, i) => s + Math.floor((i.price * i.qty) * (1 + (i.tax||0)/100)), 0);
-        if (!checked.length || total === 0) return alert("金額入りのチェック済みがありません");
+        if (!checked.length || total === 0) return alert("金額を入れてください");
         const now = new Date();
         hist.unshift({
             id: Date.now(), date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`,
@@ -162,50 +146,11 @@
         save();
     }
 
-    function clearChecked() { if (confirm('チェック済を削除しますか？')) { items = items.filter(i => !i.checked); save(); } }
-
-    // --- CSV / JSON 機能 ---
-    function exportJSON() {
-        document.getElementById('dataExchange').value = JSON.stringify({i:items, h:hist, t:tpls});
-        alert("JSONをテキストエリアに出力しました");
-    }
-
     function exportCSV() {
         let csv = "日付,月,商品名,単価,数量,税率,税込合計\n";
-        hist.forEach(g => {
-            g.items.forEach(it => {
-                csv += `${g.date},${g.monthKey},${it.text},${it.price},${it.qty},${it.tax||0},${it.fPrice}\n`;
-            });
-        });
+        hist.forEach(g => g.items.forEach(it => { csv += `${g.date},${g.monthKey},${it.text},${it.price},${it.qty},${it.tax||0},${it.fPrice}\n`; }));
         const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `shopping_history_${new Date().toLocaleDateString()}.csv`;
-        a.click();
-    }
-
-    function importData() {
-        const raw = document.getElementById('dataExchange').value.trim();
-        if(!raw) return;
-        try {
-            if (raw.startsWith('{')) { // JSON
-                const d = JSON.parse(raw);
-                items=d.i||[]; hist=d.h||[]; tpls=d.t||[];
-            } else { // CSV簡易インポート（履歴のみ）
-                const lines = raw.split('\n').slice(1);
-                hist = [];
-                lines.forEach(l => {
-                    const [date, mKey, name, p, q, t, fp] = l.split(',');
-                    if(!name) return;
-                    let group = hist.find(g => g.date === date);
-                    if(!group) { group = { id: Date.now()+Math.random(), date: date, monthKey: mKey, total: 0, items: [] }; hist.push(group); }
-                    const itemObj = { text: name, price: parseInt(p), qty: parseInt(q), tax: parseInt(t), fPrice: parseInt(fp) };
-                    group.items.push(itemObj);
-                    group.total += itemObj.fPrice;
-                });
-            }
-            save(); alert("復元しました");
-        } catch(e) { alert("形式エラー"); }
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `history.csv`; a.click();
     }
 
     function render() {
@@ -219,16 +164,15 @@
             const taxed = Math.floor((i.price * i.qty) * (1 + (i.tax||0)/100));
             if (i.checked) currentTotal += taxed;
             const prev = (function(){ for(let g of hist){ let f=g.items.find(x=>x.text===i.text); if(f) return f.price; } return null; })();
-            
             return `
                 <div class="item-card">
                     <div class="item-main">
-                        <input type="checkbox" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=!${i.checked}; save();" style="width:24px;height:24px;">
+                        <input type="checkbox" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=!${i.checked}; save();" style="width:22px;height:22px;">
                         <span class="item-text ${i.checked?'item-checked':''}" onclick="const n=prompt('修正', '${i.text}'); if(n){items.find(x=>x.id===${i.id}).text=n; save();}">${i.text}</span>
-                        <button onclick="toggleFavorite('${i.text}')" class="btn-star ${tpls.includes(i.text)?'is-fav':''}">★</button>
+                        <button onclick="tpls.includes('${i.text}')?tpls=tpls.filter(x=>x!=='${i.text}'):tpls.push('${i.text}'); save();" style="border:none;background:none;color:${tpls.includes(i.text)?'#f59e0b':'#d1d5db'}; font-size:1.2rem;">★</button>
                         <input type="number" inputmode="decimal" class="num-input" value="${i.qty}" onchange="items.find(x=>x.id===${i.id}).qty=parseInt(this.value)||1; save();">
-                        <input type="number" inputmode="decimal" class="price-input" placeholder="単価" value="${i.price||''}" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
-                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;font-size:1.2rem;">✕</button>
+                        <input type="number" inputmode="decimal" class="price-input" value="${i.price||''}" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
+                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;">✕</button>
                     </div>
                     <div class="tax-controls">
                         <button class="tax-btn ${i.tax===8?'active':''}" onclick="const it=items.find(x=>x.id===${i.id}); it.tax=(it.tax===8?null:8); save();">8%</button>
@@ -236,8 +180,7 @@
                         ${prev?`<span style="font-size:0.6rem; color:var(--text-muted); text-decoration:underline;" onclick="items.find(x=>x.id===${i.id}).price=${prev}; save();">前回: ¥${prev}</span>`:''}
                         <span class="final-price">税込 ¥${taxed.toLocaleString()}</span>
                     </div>
-                </div>
-            `;
+                </div>`;
         }).join('');
 
         document.getElementById('totalPrice').innerText = currentTotal.toLocaleString();
@@ -248,12 +191,12 @@
         const mData = {};
         hist.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
         Object.keys(mData).forEach(m => {
-            hListEl.innerHTML += `<div style="background:var(--text-main); color:white; padding:0.4rem 1rem; border-radius:0.5rem; margin-top:1rem; font-size:0.8rem; display:flex; justify-content:space-between;"><span>📅 ${m}</span><span>計 ¥${mData[m].t.toLocaleString()}</span></div>`;
+            hListEl.innerHTML += `<div class="month-summary-bar"><span>📅 ${m}</span><span>計 ¥${mData[m].t.toLocaleString()}</span></div>`;
             mData[m].g.forEach(g => {
-                hListEl.innerHTML += `<div class="card" style="font-size:0.8rem; margin-top:8px;">
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:4px; margin-bottom:4px;"><span>${g.date}</span><b>¥${g.total.toLocaleString()}</b></div>
+                hListEl.innerHTML += `<div class="card" style="font-size:0.8rem; margin-top:8px; padding:10px;">
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid rgba(0,0,0,0.1); padding-bottom:5px; margin-bottom:5px;"><span>${g.date}</span><b>¥${g.total.toLocaleString()}</b></div>
                     ${g.items.map(it => `<div class="history-row" onclick="addItem('${it.text}', ${it.qty}, ${it.price}, ${it.tax}); switchTab('list');"><span>・${it.text} (${it.qty})</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
-                    <div style="text-align:right; margin-top:6px;"><button onclick="if(confirm('削除？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="border:none;background:none;color:#f87171;font-size:0.7rem;">削除</button></div>
+                    <div style="text-align:right; margin-top:8px;"><button onclick="if(confirm('削除？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="border:none;background:none;color:#f87171;font-size:0.7rem;">記録を削除</button></div>
                 </div>`;
             });
         });
