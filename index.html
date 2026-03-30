@@ -11,6 +11,7 @@
             --text-main: #1f2937;
             --text-muted: #9ca3af;
             --white: #ffffff;
+            --star: #f59e0b; /* 定番登録用のオレンジ色 */
         }
 
         body {
@@ -23,12 +24,10 @@
         .container { max-width: 448px; margin: 0 auto; padding: 1rem; }
         h1 { font-size: 1.5rem; font-weight: bold; text-align: center; margin: 1.5rem 0; }
 
-        /* タブ */
         .tabs { display: flex; background: var(--white); border-bottom: 1px solid #e5e7eb; border-radius: 0.5rem 0.5rem 0 0; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
         .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
         .tab-active { border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: bold; }
 
-        /* 入力エリア */
         .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
         input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; outline: none; font-size: 16px; }
@@ -38,7 +37,6 @@
         
         .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
 
-        /* 定番品セクション */
         .template-section { margin-top: 1rem; border-top: 1px solid #f3f4f6; padding-top: 0.75rem; }
         .template-label { font-size: 10px; color: var(--text-muted); font-weight: bold; margin-bottom: 0.5rem; text-transform: uppercase; }
         .template-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -50,24 +48,28 @@
         }
         .chip-delete { color: #f87171; margin-left: 4px; font-weight: bold; }
 
-        /* リスト表示 */
         .list-container { display: flex; flex-direction: column; gap: 0.5rem; }
-        .item-card { display: flex; align-items: center; justify-content: space-between; background: var(--white); padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .item-card { display: flex; align-items: center; background: var(--white); padding: 0.75rem 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .item-content { display: flex; align-items: center; gap: 0.75rem; flex: 1; cursor: pointer; }
         .checkbox { width: 1.25rem; height: 1.25rem; }
         .checked { text-decoration: line-through; color: var(--text-muted); }
-        .btn-delete { color: #e5e7eb; border: none; background: none; font-size: 1.2rem; cursor: pointer; padding: 0 0.5rem; }
+        
+        /* リスト内のアクションボタン */
+        .item-actions { display: flex; gap: 0.5rem; align-items: center; }
+        .btn-star { border: none; background: none; font-size: 1rem; cursor: pointer; padding: 0.25rem; color: #d1d5db; transition: color 0.2s; }
+        .btn-star.active { color: var(--star); }
+        .btn-delete { color: #e5e7eb; border: none; background: none; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; }
 
         .archive-btn { background: #1f2937; color: white; padding: 0.6rem 1.5rem; border-radius: 9999px; border: none; font-size: 0.875rem; margin-top: 2rem; cursor: pointer; }
         .hidden { display: none; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .recording { animation: pulse 1s infinite; color: #ef4444; }
+        .recording { animation: pulse 1s infinite; color: #ef4444 !important; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🛒 お買い物アシスト</h1>
+        <h1>🛒 お買い物リスト</h1>
 
         <div class="tabs">
             <button onclick="switchTab('list')" id="tabList" class="tab-btn tab-active">リスト</button>
@@ -80,13 +82,12 @@
                     <input type="text" id="itemInput" placeholder="何を買う？" oninput="toggleButtons()">
                     <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
                     <button onclick="addItem()" id="addBtn" class="btn-add">追加</button>
-                    <button onclick="saveAsTemplate()" id="tplBtn" class="btn-template hidden">定番登録</button>
+                    <button onclick="saveAsTemplate(document.getElementById('itemInput').value)" id="tplBtn" class="btn-template hidden">定番登録</button>
                 </div>
                 
                 <div class="template-section">
                     <p class="template-label">いつもの定番品</p>
-                    <div id="templateContainer" class="template-container">
-                        </div>
+                    <div id="templateContainer" class="template-container"></div>
                 </div>
             </div>
 
@@ -103,7 +104,6 @@
     <script>
         let items = JSON.parse(localStorage.getItem('shopping_items')) || [];
         let history = JSON.parse(localStorage.getItem('shopping_history')) || [];
-        // 初期状態は空にする
         let myTemplates = JSON.parse(localStorage.getItem('shopping_templates')) || [];
 
         function save() {
@@ -118,12 +118,16 @@
             document.getElementById('tplBtn').classList.toggle('hidden', val === "");
         }
 
-        function saveAsTemplate() {
-            const val = document.getElementById('itemInput').value.trim();
-            if (val && !myTemplates.includes(val)) {
-                myTemplates.push(val);
-                document.getElementById('itemInput').value = "";
-                toggleButtons();
+        // 定番登録を汎用化（引数でテキストを受け取れるように変更）
+        function saveAsTemplate(val) {
+            const text = val ? val.trim() : "";
+            if (text && !myTemplates.includes(text)) {
+                myTemplates.push(text);
+                // 入力欄からの登録だった場合のみクリア
+                if (document.getElementById('itemInput').value.trim() === text) {
+                    document.getElementById('itemInput').value = "";
+                    toggleButtons();
+                }
                 save();
             }
         }
@@ -153,12 +157,19 @@
             if (!SpeechRecognition) return alert("非対応ブラウザです");
             const recognition = new SpeechRecognition();
             recognition.lang = 'ja-JP';
-            recognition.onstart = () => document.getElementById('micBtn').classList.add('recording');
-            recognition.onend = () => document.getElementById('micBtn').classList.remove('recording');
+            recognition.continuous = false;
+            
+            const micBtn = document.getElementById('micBtn');
+            const finish = () => micBtn.classList.remove('recording');
+
+            recognition.onstart = () => micBtn.classList.add('recording');
             recognition.onresult = (event) => {
                 document.getElementById('itemInput').value = event.results[0][0].transcript;
                 addItem();
+                recognition.stop();
             };
+            recognition.onerror = finish;
+            recognition.onend = finish;
             recognition.start();
         }
 
@@ -203,8 +214,7 @@
             const historyEl = document.getElementById('historyList');
             const tplContainer = document.getElementById('templateContainer');
             
-            // 定番品表示
-            tplContainer.innerHTML = myTemplates.length ? '' : '<p style="color:#d1d5db;font-size:0.7rem;">よく買うものを登録してください</p>';
+            tplContainer.innerHTML = myTemplates.length ? '' : '<p style="color:#d1d5db;font-size:0.7rem;">定番品を登録してください</p>';
             myTemplates.forEach(name => {
                 const span = document.createElement('div');
                 span.className = "chip";
@@ -213,9 +223,9 @@
                 tplContainer.appendChild(span);
             });
 
-            // メインリスト（カテゴリなし・シンプル表示）
             listEl.innerHTML = items.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">リストは空です</p>';
             items.forEach(item => {
+                const isTemplate = myTemplates.includes(item.text);
                 const div = document.createElement('div');
                 div.className = "item-card";
                 div.innerHTML = `
@@ -223,12 +233,16 @@
                         <input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox">
                         <span class="${item.checked ? 'checked' : ''}">${item.text}</span>
                     </div>
-                    <button onclick="deleteItem(${item.id}, 'items')" class="btn-delete">✕</button>
+                    <div class="item-actions">
+                        <button onclick="saveAsTemplate('${item.text}')" class="btn-star ${isTemplate ? 'active' : ''}" title="定番に追加">
+                            ${isTemplate ? '★' : '☆'}
+                        </button>
+                        <button onclick="deleteItem(${item.id}, 'items')" class="btn-delete">✕</button>
+                    </div>
                 `;
                 listEl.appendChild(div);
             });
 
-            // 履歴
             historyEl.innerHTML = history.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
             history.forEach(item => {
                 const div = document.createElement('div');
