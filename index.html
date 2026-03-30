@@ -16,66 +16,52 @@
         }
         body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding-bottom: 140px; }
         .container { max-width: 448px; margin: 0 auto; padding: 1rem; }
-        
         .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 4px 6px var(--card-shadow); margin-bottom: 1rem; }
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
         input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #374151; border-radius: 0.5rem; background: #374151; color: white; font-size: 16px; outline: none; }
-        
         .btn-add { background: var(--primary); color: white; padding: 0.75rem 1.2rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; }
-        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted); }
-        .mic-btn.recording { color: #ef4444; }
-
+        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 5px; }
+        .mic-btn.recording { color: #ef4444; filter: drop-shadow(0 0 3px #ef4444); }
         .item-card { background: var(--white); padding: 0.8rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 2px 4px var(--card-shadow); }
         .item-main { display: flex; align-items: center; gap: 0.5rem; }
         .item-text { flex: 1; font-weight: 500; cursor: pointer; }
-        /* チェック済みをしっかり薄くする */
         .item-checked { text-decoration: line-through; color: var(--text-muted); opacity: 0.4; }
-
         .num-input { width: 45px; padding: 0.4rem; border: 1px solid #4b5563; border-radius: 0.25rem; background: #374151; color: white; text-align: center; }
         .price-input { width: 80px; padding: 0.4rem; border: 1px solid #4b5563; border-radius: 0.25rem; background: #374151; color: white; text-align: right; }
-
         .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #111827; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-top: 1px solid #374151; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
         .total-amount { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
-
         .tabs { display: flex; background: var(--white); border-radius: 0.5rem; margin-bottom: 1rem; overflow: hidden; }
         .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; }
         .tab-active { background: var(--primary); color: white; font-weight: bold; }
-        
         .hidden { display: none !important; }
         .tax-btn { font-size: 0.7rem; padding: 4px 8px; border: 1px solid #4b5563; border-radius: 4px; background: #374151; color: white; cursor: pointer; }
         .tax-btn.active { background: var(--primary); }
         .chip { padding: 4px 12px; border-radius: 99px; background: #1e3a8a; color: #60a5fa; font-size: 0.75rem; border: none; cursor: pointer; margin-right: 5px; margin-bottom: 5px; }
         .prev-price { font-size: 0.65rem; color: var(--text-muted); text-decoration: underline; margin-left: 5px; cursor: pointer; }
-        
-        /* 履歴の月間ヘッダー */
         .month-header { background: #374151; padding: 8px 12px; border-radius: 6px; margin: 15px 0 8px; font-size: 0.85rem; display: flex; justify-content: space-between; font-weight: bold; }
-        .re-add-hint { font-size: 0.7rem; color: var(--text-muted); text-align: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>🛒 お買い物リスト</h1>
-
     <div class="tabs">
         <button onclick="switchTab('list')" id="tabList" class="tab-btn tab-active">リスト</button>
         <button onclick="switchTab('history')" id="tabHistory" class="tab-btn">履歴</button>
     </div>
-
     <div id="listView">
         <div class="card">
             <div class="input-group">
                 <input type="text" id="itemInput" autocomplete="off" placeholder="何を買う？" onkeypress="if(event.key==='Enter') addItem()">
-                <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
+                <button onclick="toggleVoice()" id="micBtn" class="mic-btn">🎙️</button>
                 <button onclick="addItem()" class="btn-add">追加</button>
             </div>
             <div id="templateContainer" style="display:flex; flex-wrap:wrap; margin-top:10px;"></div>
         </div>
         <div id="shoppingList"></div>
     </div>
-
     <div id="historyView" class="hidden">
-        <div class="re-add-hint">タップで再追加</div>
+        <div style="font-size:0.7rem; color:var(--text-muted); text-align:center; margin-bottom:10px;">タップで再追加</div>
         <div id="historyList"></div>
     </div>
 </div>
@@ -86,10 +72,11 @@
 </div>
 
 <script>
-    const KEY = 'SHOP_DATA_FINAL_V1';
+    const KEY = 'SHOP_DATA_V2';
     let items = JSON.parse(localStorage.getItem(KEY+'_i')) || [];
     let hist = JSON.parse(localStorage.getItem(KEY+'_h')) || [];
     let tpls = JSON.parse(localStorage.getItem(KEY+'_t')) || [];
+    let recognition = null;
 
     function save() {
         localStorage.setItem(KEY+'_i', JSON.stringify(items));
@@ -112,19 +99,32 @@
         save();
     };
 
-    window.startVoice = function() {
+    window.toggleVoice = function() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return;
-        const rec = new SpeechRecognition();
-        rec.lang = 'ja-JP';
+        if (!SpeechRecognition) return alert("音声認識に対応していません");
+        
+        if (recognition) {
+            recognition.stop();
+            return;
+        }
+
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ja-JP';
         const btn = document.getElementById('micBtn');
-        rec.onstart = () => { btn.classList.add('recording'); btn.textContent = '🔴'; };
-        rec.onresult = (e) => {
-            addItem(e.results[0][0].transcript.replace(/[。．]$/, ""));
-            rec.stop();
+
+        recognition.onstart = () => { btn.classList.add('recording'); btn.textContent = '🔴'; };
+        recognition.onresult = (e) => {
+            const result = e.results[0][0].transcript.replace(/[。．]$/, "");
+            addItem(result);
+            recognition.stop(); // ここで確実に止める
         };
-        rec.onend = () => { btn.classList.remove('recording'); btn.textContent = '🎙️'; };
-        rec.start();
+        recognition.onend = () => {
+            btn.classList.remove('recording');
+            btn.textContent = '🎙️';
+            recognition = null;
+        };
+        recognition.onerror = () => recognition.stop();
+        recognition.start();
     };
 
     window.switchTab = function(t) {
@@ -163,13 +163,11 @@
         listEl.innerHTML = items.map(i => {
             const taxed = Math.floor((i.price * i.qty) * (1 + (i.tax||0)/100));
             if (i.checked) currentTotal += taxed;
-            
             let lastPrice = null;
             for(let g of hist) {
                 let found = g.items.find(x => x.text === i.text);
                 if(found && found.price > 0) { lastPrice = found.price; break; }
             }
-
             return `
                 <div class="item-card">
                     <div class="item-main">
@@ -188,10 +186,8 @@
                     </div>
                 </div>`;
         }).join('');
-
         document.getElementById('totalPrice').innerText = currentTotal.toLocaleString();
 
-        // 履歴の描画（タップで再追加機能付き）
         hListEl.innerHTML = '';
         const mData = {};
         hist.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
@@ -202,7 +198,7 @@
                     <div style="display:flex; justify-content:space-between; border-bottom:1px solid #4b5563; padding-bottom:8px; margin-bottom:5px;">
                         <span>${g.date}</span><b style="color:var(--accent);">¥${g.total.toLocaleString()}</b>
                     </div>
-                    ${g.items.map(it => `<div onclick="switchTab('list'); addItem('${it.text}')" style="display:flex; justify-content:space-between; padding:6px 0; cursor:pointer; border-bottom: 1px solid rgba(255,255,255,0.05);"><span>・${it.text} (${it.qty})</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
+                    ${g.items.map(it => `<div onclick="switchTab('list'); addItem('${it.text}')" style="display:flex; justify-content:space-between; padding:6px 0; cursor:pointer;"><span>・${it.text} (${it.qty})</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
                     <div style="text-align:right; margin-top:8px;"><button onclick="if(confirm('削除？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="border:none;background:none;color:#f87171;font-size:0.75rem;">削除</button></div>
                 </div>`;
             });
