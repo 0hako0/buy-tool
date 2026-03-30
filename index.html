@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>お買い物メモ & 履歴</title>
     <style>
-        /* 基本設定 */
         :root {
             --primary: #3b82f6;
             --primary-hover: #2563eb;
@@ -19,152 +18,48 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             background-color: var(--bg);
             color: var(--text-main);
-            margin: 0;
-            padding: 0;
-            min-height: 100-screen;
+            margin: 0; padding: 0; min-height: 100vh;
         }
 
-        .container {
-            max-width: 448px;
-            margin: 0 auto;
-            padding: 1rem;
-        }
+        .container { max-width: 448px; margin: 0 auto; padding: 1rem; }
+        h1 { font-size: 1.5rem; font-weight: bold; text-align: center; margin: 1.5rem 0; }
 
-        h1 {
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            margin: 1.5rem 0;
-        }
+        .tabs { display: flex; background: var(--white); border-bottom: 1px solid #e5e7eb; border-radius: 0.5rem 0.5rem 0 0; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
+        .tab-active { border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: bold; }
 
-        /* タブ */
-        .tabs {
-            display: flex;
-            background: var(--white);
-            border-bottom: 1px solid #e5e7eb;
-            border-radius: 0.5rem 0.5rem 0 0;
-            overflow: hidden;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            margin-bottom: 1.5rem;
-        }
+        .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        .input-group { display: flex; gap: 0.5rem; align-items: center; }
+        input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; outline: none; font-size: 16px; /* iOSのズーム防止 */ }
+        
+        .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; font-size: 0.875rem; }
+        .btn-template { background: #10b981; color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; font-size: 0.75rem; white-space: nowrap; }
+        
+        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 0.25rem; }
 
-        .tab-btn {
-            flex: 1;
-            padding: 0.75rem;
-            border: none;
-            background: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 1rem;
-        }
-
-        .tab-active {
-            border-bottom: 3px solid var(--primary);
-            color: var(--primary);
-            font-weight: bold;
-        }
-
-        /* 入力エリア */
-        .card {
-            background: var(--white);
-            padding: 1rem;
-            border-radius: 0.75rem;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            margin-bottom: 1rem;
-        }
-
-        .input-group {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        input[type="text"] {
-            flex: 1;
-            padding: 0.75rem;
-            border: 1px solid #d1d5db;
-            border-radius: 0.5rem;
-            outline: none;
-        }
-
-        input[type="text"]:focus {
-            ring: 2px solid var(--primary);
-            border-color: var(--primary);
-        }
-
-        .btn-add {
-            background: var(--primary);
-            color: white;
-            padding: 0.5rem 1.25rem;
-            border-radius: 0.5rem;
-            border: none;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        .mic-btn {
-            font-size: 1.5rem;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0.25rem;
-            transition: transform 0.2s;
-        }
-
-        /* テンプレートチップ */
-        .template-section { margin-top: 1rem; }
-        .template-label { font-size: 10px; color: var(--text-muted); font-weight: bold; margin-bottom: 0.5rem; text-transform: uppercase; }
+        .template-section { margin-top: 1rem; border-top: 1px solid #f3f4f6; pt: 0.75rem; }
+        .template-label { font-size: 10px; color: var(--text-muted); font-weight: bold; margin: 0.75rem 0 0.5rem 0; text-transform: uppercase; display: flex; justify-content: space-between; }
         .template-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        
+        /* 定番品チップ */
         .chip {
-            background: #eff6ff;
-            color: var(--primary);
-            border: 1px solid #dbeafe;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            cursor: pointer;
+            display: flex; align-items: center; gap: 4px;
+            background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe;
+            padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; cursor: pointer;
         }
+        .chip-delete { color: #f87171; font-weight: bold; margin-left: 2px; font-size: 14px; }
 
-        /* リストアイテム */
         .list-container { display: flex; flex-direction: column; gap: 0.5rem; }
         .category-title { font-size: 10px; font-weight: bold; color: #60a5fa; margin: 0.5rem 0 0.25rem 0.25rem; letter-spacing: 0.1em; }
-        
-        .item-card {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: var(--white);
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-
+        .item-card { display: flex; align-items: center; justify-content: space-between; background: var(--white); padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .item-content { display: flex; align-items: center; gap: 0.75rem; flex: 1; cursor: pointer; }
         .checkbox { width: 1.25rem; height: 1.25rem; cursor: pointer; }
         .checked { text-decoration: line-through; color: var(--text-muted); }
+        .btn-delete { color: #e5e7eb; border: none; background: none; font-size: 1.2rem; cursor: pointer; padding: 0 0.5rem; }
 
-        .btn-delete { color: #e5e7eb; border: none; background: none; font-size: 1.2rem; cursor: pointer; }
-        .btn-delete:hover { color: #f87171; }
-
-        /* フッターボタン */
-        .archive-btn {
-            background: #1f2937;
-            color: white;
-            padding: 0.5rem 1.5rem;
-            border-radius: 9999px;
-            border: none;
-            font-size: 0.875rem;
-            margin-top: 2rem;
-            cursor: pointer;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        /* 履歴 */
+        .archive-btn { background: #1f2937; color: white; padding: 0.6rem 1.5rem; border-radius: 9999px; border: none; font-size: 0.875rem; margin-top: 2rem; cursor: pointer; }
         .hidden { display: none; }
-        .history-item { opacity: 0.8; border: 1px dashed #d1d5db; background: rgba(255,255,255,0.6); }
-
-        /* アニメーション */
-        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .recording { animation: pulse 1s infinite; color: #ef4444; }
     </style>
 </head>
@@ -181,40 +76,34 @@
         <div id="listView">
             <div class="card">
                 <div class="input-group">
-                    <input type="text" id="itemInput" placeholder="何を買う？">
+                    <input type="text" id="itemInput" placeholder="何を買う？" oninput="toggleButtons()">
                     <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
-                    <button onclick="addItem()" class="btn-add">追加</button>
+                    <button onclick="addItem()" id="addBtn" class="btn-add">追加</button>
+                    <button onclick="saveAsTemplate()" id="tplBtn" class="btn-template hidden">定番登録</button>
                 </div>
+                
                 <div class="template-section">
-                    <p class="template-label">いつもの定番品</p>
-                    <div class="template-container">
-                        <button onclick="addTemplate('牛乳')" class="chip">＋牛乳</button>
-                        <button onclick="addTemplate('卵')" class="chip">＋卵</button>
-                        <button onclick="addTemplate('パン')" class="chip">＋パン</button>
-                        <button onclick="addTemplate('納豆')" class="chip">＋納豆</button>
-                    </div>
+                    <p class="template-label"><span>いつもの定番品</span><span>タップで追加 / ×で削除</span></p>
+                    <div id="templateContainer" class="template-container">
+                        </div>
                 </div>
             </div>
 
             <div id="shoppingList" class="list-container"></div>
-
-            <div style="text-align: center;">
-                <button onclick="archiveChecked()" class="archive-btn">チェック済みを履歴へ移動</button>
-            </div>
+            <div style="text-align: center;"><button onclick="archiveChecked()" class="archive-btn">チェック済みを履歴へ移動</button></div>
         </div>
 
         <div id="historyView" class="hidden">
-            <p style="text-align: center; color: #6b7280; font-size: 0.75rem; margin-bottom: 1rem;">過去に買ったものです。タップで復活。</p>
             <div id="historyList" class="list-container"></div>
-            <div style="text-align: center; margin-top: 2rem;">
-                <button onclick="clearHistory()" style="color: #f87171; border: none; background: none; font-size: 0.75rem; text-decoration: underline; cursor: pointer;">履歴をすべて消去</button>
-            </div>
+            <div style="text-align: center; margin-top: 2rem;"><button onclick="clearHistory()" style="color:#f87171; border:none; background:none; font-size:0.75rem; text-decoration:underline;">履歴をすべて消去</button></div>
         </div>
     </div>
 
     <script>
+        // データ初期化
         let items = JSON.parse(localStorage.getItem('shopping_items')) || [];
         let history = JSON.parse(localStorage.getItem('shopping_history')) || [];
+        let myTemplates = JSON.parse(localStorage.getItem('shopping_templates')) || ['牛乳', '卵', 'パン'];
 
         const categories = {
             '野菜・果物': ['にんじん', 'たまねぎ', 'キャベツ', 'レタス', 'バナナ', 'リンゴ', 'トマト', 'きゅうり'],
@@ -226,10 +115,35 @@
         function save() {
             localStorage.setItem('shopping_items', JSON.stringify(items));
             localStorage.setItem('shopping_history', JSON.stringify(history));
+            localStorage.setItem('shopping_templates', JSON.stringify(myTemplates));
             render();
         }
 
-        function addTemplate(name) {
+        // 入力内容に応じてボタンを切り替える
+        function toggleButtons() {
+            const val = document.getElementById('itemInput').value.trim();
+            document.getElementById('tplBtn').classList.toggle('hidden', val === "");
+        }
+
+        // 定番品として保存
+        function saveAsTemplate() {
+            const val = document.getElementById('itemInput').value.trim();
+            if (val && !myTemplates.includes(val)) {
+                myTemplates.push(val);
+                document.getElementById('itemInput').value = "";
+                toggleButtons();
+                save();
+            }
+        }
+
+        // 定番品を削除
+        function removeTemplate(e, name) {
+            e.stopPropagation(); // 親のクリックイベント（リスト追加）を防ぐ
+            myTemplates = myTemplates.filter(t => t !== name);
+            save();
+        }
+
+        function addFromTemplate(name) {
             items.push({ id: Date.now(), text: name, checked: false });
             save();
         }
@@ -239,6 +153,7 @@
             if (!input.value.trim()) return;
             items.push({ id: Date.now(), text: input.value, checked: false });
             input.value = '';
+            toggleButtons();
             save();
         }
 
@@ -247,9 +162,8 @@
             if (!SpeechRecognition) return alert("非対応ブラウザです");
             const recognition = new SpeechRecognition();
             recognition.lang = 'ja-JP';
-            const micBtn = document.getElementById('micBtn');
-            recognition.onstart = () => micBtn.classList.add('recording');
-            recognition.onend = () => micBtn.classList.remove('recording');
+            recognition.onstart = () => document.getElementById('micBtn').classList.add('recording');
+            recognition.onend = () => document.getElementById('micBtn').classList.remove('recording');
             recognition.onresult = (event) => {
                 document.getElementById('itemInput').value = event.results[0][0].transcript;
                 addItem();
@@ -303,7 +217,19 @@
         function render() {
             const listEl = document.getElementById('shoppingList');
             const historyEl = document.getElementById('historyList');
+            const tplContainer = document.getElementById('templateContainer');
             
+            // 定番品チップの描画
+            tplContainer.innerHTML = '';
+            myTemplates.forEach(name => {
+                const span = document.createElement('div');
+                span.className = "chip";
+                span.onclick = () => addFromTemplate(name);
+                span.innerHTML = `＋${name} <span class="chip-delete" onclick="removeTemplate(event, '${name}')">×</span>`;
+                tplContainer.appendChild(span);
+            });
+
+            // メインリスト
             listEl.innerHTML = items.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">リストは空です</p>';
             if (items.length) {
                 const grouped = items.reduce((acc, item) => {
@@ -315,35 +241,23 @@
 
                 for (const [cat, catItems] of Object.entries(grouped)) {
                     const title = document.createElement('p');
-                    title.className = "category-title";
-                    title.innerText = cat;
+                    title.className = "category-title"; title.innerText = cat;
                     listEl.appendChild(title);
-
                     catItems.forEach(item => {
                         const div = document.createElement('div');
                         div.className = "item-card";
-                        div.innerHTML = `
-                            <div class="item-content" onclick="toggleCheck(${item.id})">
-                                <input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox">
-                                <span class="${item.checked ? 'checked' : ''}">${item.text}</span>
-                            </div>
-                            <button onclick="deleteItem(${item.id}, 'items')" class="btn-delete">✕</button>
-                        `;
+                        div.innerHTML = `<div class="item-content" onclick="toggleCheck(${item.id})"><input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox"><span class="${item.checked ? 'checked' : ''}">${item.text}</span></div><button onclick="deleteItem(${item.id}, 'items')" class="btn-delete">✕</button>`;
                         listEl.appendChild(div);
                     });
                 }
             }
 
+            // 履歴
             historyEl.innerHTML = history.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
             history.forEach(item => {
                 const div = document.createElement('div');
                 div.className = "item-card history-item";
-                div.innerHTML = `
-                    <div class="item-content" onclick="restoreItem(${item.id})">
-                        <span style="font-size:0.875rem;color:#4b5563;">↩️ ${item.text}</span>
-                    </div>
-                    <button onclick="deleteItem(${item.id}, 'history')" class="btn-delete">✕</button>
-                `;
+                div.innerHTML = `<div class="item-content" onclick="restoreItem(${item.id})"><span style="font-size:0.875rem;color:#4b5563;">↩️ ${item.text}</span></div><button onclick="deleteItem(${item.id}, 'history')" class="btn-delete">✕</button>`;
                 historyEl.appendChild(div);
             });
         }
