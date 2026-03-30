@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>お買い物メモ</title>
+    <title>お買い物プロ</title>
     <style>
         :root {
             --primary: #3b82f6;
-            --bg: #f9fafb;
+            --bg: #f3f4f6;
             --text-main: #1f2937;
-            --text-muted: #9ca3af;
+            --text-muted: #6b7280;
             --white: #ffffff;
-            --star: #f59e0b; /* 定番登録用のオレンジ色 */
+            --star: #f59e0b;
+            --accent: #10b981;
         }
 
         body {
@@ -21,55 +22,70 @@
             margin: 0; padding: 0; min-height: 100vh;
         }
 
-        .container { max-width: 448px; margin: 0 auto; padding: 1rem; }
-        h1 { font-size: 1.5rem; font-weight: bold; text-align: center; margin: 1.5rem 0; }
+        .container { max-width: 448px; margin: 0 auto; padding: 1rem; padding-bottom: 80px; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin: 1rem 0; }
+        h1 { font-size: 1.25rem; font-weight: bold; margin: 0; }
+        .share-btn { background: none; border: none; font-size: 1.25rem; cursor: pointer; }
 
-        .tabs { display: flex; background: var(--white); border-bottom: 1px solid #e5e7eb; border-radius: 0.5rem 0.5rem 0 0; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
-        .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
-        .tab-active { border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: bold; }
+        .tabs { display: flex; background: var(--white); border-radius: 0.5rem; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+        .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; }
+        .tab-active { background: var(--primary); color: white; font-weight: bold; }
 
         .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
         input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; outline: none; font-size: 16px; }
         
-        .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; }
-        .btn-template { background: #10b981; color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
-        
+        .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; }
+        .btn-template { background: var(--accent); color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; font-size: 0.75rem; }
         .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
 
         .template-section { margin-top: 1rem; border-top: 1px solid #f3f4f6; padding-top: 0.75rem; }
-        .template-label { font-size: 10px; color: var(--text-muted); font-weight: bold; margin-bottom: 0.5rem; text-transform: uppercase; }
-        .template-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        
+        .template-container { display: flex; flex-wrap: wrap; gap: 0.4rem; }
         .chip {
-            display: flex; align-items: center; gap: 4px;
-            background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe;
-            padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; cursor: pointer;
+            display: flex; align-items: center; gap: 4px; background: #eff6ff; color: var(--primary); 
+            border: 1px solid #dbeafe; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem;
         }
-        .chip-delete { color: #f87171; margin-left: 4px; font-weight: bold; }
 
-        .list-container { display: flex; flex-direction: column; gap: 0.5rem; }
-        .item-card { display: flex; align-items: center; background: var(--white); padding: 0.75rem 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-        .item-content { display: flex; align-items: center; gap: 0.75rem; flex: 1; cursor: pointer; }
-        .checkbox { width: 1.25rem; height: 1.25rem; }
-        .checked { text-decoration: line-through; color: var(--text-muted); }
+        .item-card { 
+            display: flex; align-items: center; background: var(--white); padding: 0.5rem; 
+            border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 0.5rem;
+            touch-action: none; /* ドラッグ用 */
+        }
+        .drag-handle { color: #d1d5db; padding: 0 0.5rem; cursor: grab; font-size: 1.2rem; }
+        .item-content { flex: 1; display: flex; align-items: center; gap: 0.5rem; overflow: hidden; }
+        .item-text { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .price-input { width: 60px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; font-size: 0.8rem; text-align: right; }
         
-        /* リスト内のアクションボタン */
-        .item-actions { display: flex; gap: 0.5rem; align-items: center; }
-        .btn-star { border: none; background: none; font-size: 1rem; cursor: pointer; padding: 0.25rem; color: #d1d5db; transition: color 0.2s; }
+        .item-actions { display: flex; gap: 0.2rem; align-items: center; }
+        .btn-star { border: none; background: none; color: #d1d5db; cursor: pointer; font-size: 1rem; }
         .btn-star.active { color: var(--star); }
-        .btn-delete { color: #e5e7eb; border: none; background: none; font-size: 1.2rem; cursor: pointer; padding: 0.25rem; }
+        .btn-delete { color: #fee2e2; border: none; background: none; font-size: 1.2rem; padding: 0.4rem; }
 
-        .archive-btn { background: #1f2937; color: white; padding: 0.6rem 1.5rem; border-radius: 9999px; border: none; font-size: 0.875rem; margin-top: 2rem; cursor: pointer; }
+        .checked { text-decoration: line-through; color: var(--text-muted); opacity: 0.6; }
+
+        /* フッター合計エリア */
+        .footer-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: white;
+            padding: 1rem; display: flex; justify-content: space-between; align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 100;
+        }
+        .total-label { font-size: 0.8rem; color: #9ca3af; }
+        .total-amount { font-size: 1.25rem; font-weight: bold; color: var(--accent); }
+
         .hidden { display: none; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .recording { animation: pulse 1s infinite; color: #ef4444 !important; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        .dragging { opacity: 0.5; background: #ebf5ff; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>🛒 お買い物リスト</h1>
+        <div class="header">
+            <h1>🛒 お買い物メモ</h1>
+            <button onclick="shareList()" class="share-btn" title="リストを共有">📤</button>
+        </div>
 
         <div class="tabs">
             <button onclick="switchTab('list')" id="tabList" class="tab-btn tab-active">リスト</button>
@@ -82,50 +98,67 @@
                     <input type="text" id="itemInput" placeholder="何を買う？" oninput="toggleButtons()">
                     <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
                     <button onclick="addItem()" id="addBtn" class="btn-add">追加</button>
-                    <button onclick="saveAsTemplate(document.getElementById('itemInput').value)" id="tplBtn" class="btn-template hidden">定番登録</button>
+                    <button onclick="saveAsTemplate(document.getElementById('itemInput').value)" id="tplBtn" class="btn-template hidden">定番</button>
                 </div>
-                
                 <div class="template-section">
-                    <p class="template-label">いつもの定番品</p>
                     <div id="templateContainer" class="template-container"></div>
                 </div>
             </div>
 
             <div id="shoppingList" class="list-container"></div>
-            <div style="text-align: center;"><button onclick="archiveChecked()" class="archive-btn">チェック済みを履歴へ移動</button></div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <button onclick="archiveChecked()" style="background:#4b5563; color:white; border:none; padding:0.6rem 1rem; border-radius:9999px; font-size:0.8rem;">チェック済みを履歴へ移動</button>
+            </div>
         </div>
 
         <div id="historyView" class="hidden">
             <div id="historyList" class="list-container"></div>
-            <div style="text-align: center; margin-top: 2rem;"><button onclick="clearHistory()" style="color:#f87171; border:none; background:none; font-size:0.75rem; text-decoration:underline; cursor:pointer;">履歴をすべて消去</button></div>
+            <p onclick="clearHistory()" style="text-align:center; color:#f87171; font-size:0.75rem; margin-top:2rem; cursor:pointer;">履歴をすべて消去</p>
         </div>
     </div>
 
+    <div class="footer-bar" id="footerTotal">
+        <div><span class="total-label">チェック済合計:</span></div>
+        <div><span class="total-amount">¥ <span id="totalPrice">0</span></span></div>
+    </div>
+
     <script>
-        let items = JSON.parse(localStorage.getItem('shopping_items')) || [];
-        let history = JSON.parse(localStorage.getItem('shopping_history')) || [];
-        let myTemplates = JSON.parse(localStorage.getItem('shopping_templates')) || [];
+        let items = JSON.parse(localStorage.getItem('shop_items_v2')) || [];
+        let history = JSON.parse(localStorage.getItem('shop_hist_v2')) || [];
+        let myTemplates = JSON.parse(localStorage.getItem('shop_tpl_v2')) || [];
 
         function save() {
-            localStorage.setItem('shopping_items', JSON.stringify(items));
-            localStorage.setItem('shopping_history', JSON.stringify(history));
-            localStorage.setItem('shopping_templates', JSON.stringify(myTemplates));
+            localStorage.setItem('shop_items_v2', JSON.stringify(items));
+            localStorage.setItem('shop_hist_v2', JSON.stringify(history));
+            localStorage.setItem('shop_tpl_v2', JSON.stringify(myTemplates));
             render();
         }
 
-        function toggleButtons() {
-            const val = document.getElementById('itemInput').value.trim();
-            document.getElementById('tplBtn').classList.toggle('hidden', val === "");
+        function addItem() {
+            const input = document.getElementById('itemInput');
+            const text = input.value.trim();
+            if (!text) return;
+            items.push({ id: Date.now(), text, checked: false, price: 0 });
+            input.value = '';
+            toggleButtons();
+            save();
         }
 
-        // 定番登録を汎用化（引数でテキストを受け取れるように変更）
-        function saveAsTemplate(val) {
-            const text = val ? val.trim() : "";
+        function updatePrice(id, price) {
+            items = items.map(i => i.id === id ? { ...i, price: parseInt(price) || 0 } : i);
+            save();
+        }
+
+        function toggleCheck(id) {
+            items = items.map(i => i.id === id ? { ...i, checked: !i.checked } : i);
+            save();
+        }
+
+        function saveAsTemplate(text) {
             if (text && !myTemplates.includes(text)) {
                 myTemplates.push(text);
-                // 入力欄からの登録だった場合のみクリア
-                if (document.getElementById('itemInput').value.trim() === text) {
-                    document.getElementById('itemInput').value = "";
+                if (document.getElementById('itemInput').value === text) {
+                    document.getElementById('itemInput').value = '';
                     toggleButtons();
                 }
                 save();
@@ -138,125 +171,115 @@
             save();
         }
 
-        function addFromTemplate(name) {
-            items.push({ id: Date.now(), text: name, checked: false });
-            save();
-        }
-
-        function addItem() {
-            const input = document.getElementById('itemInput');
-            if (!input.value.trim()) return;
-            items.push({ id: Date.now(), text: input.value, checked: false });
-            input.value = '';
-            toggleButtons();
-            save();
-        }
-
-        function startVoice() {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (!SpeechRecognition) return alert("非対応ブラウザです");
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'ja-JP';
-            recognition.continuous = false;
-            
-            const micBtn = document.getElementById('micBtn');
-            const finish = () => micBtn.classList.remove('recording');
-
-            recognition.onstart = () => micBtn.classList.add('recording');
-            recognition.onresult = (event) => {
-                document.getElementById('itemInput').value = event.results[0][0].transcript;
-                addItem();
-                recognition.stop();
-            };
-            recognition.onerror = finish;
-            recognition.onend = finish;
-            recognition.start();
-        }
-
-        function toggleCheck(id) {
-            items = items.map(item => item.id === id ? { ...item, checked: !item.checked } : item);
-            save();
-        }
-
-        function archiveChecked() {
-            const checkedItems = items.filter(item => item.checked);
-            if (!checkedItems.length) return;
-            history = [...checkedItems.map(i => ({...i, checked: false})), ...history].slice(0, 50);
-            items = items.filter(item => !item.checked);
-            save();
-        }
-
-        function restoreItem(id) {
-            const item = history.find(h => h.id === id);
-            items.push({ ...item, id: Date.now() });
-            history = history.filter(h => h.id !== id);
-            save();
-            switchTab('list');
-        }
-
-        function deleteItem(id, type) {
-            if (type === 'items') items = items.filter(i => i.id !== id);
-            else history = history.filter(i => i.id !== id);
-            save();
-        }
-
-        function clearHistory() { if(confirm('消去しますか？')) { history = []; save(); } }
-
-        function switchTab(tab) {
-            document.getElementById('listView').classList.toggle('hidden', tab !== 'list');
-            document.getElementById('historyView').classList.toggle('hidden', tab !== 'history');
-            document.getElementById('tabList').className = `tab-btn ${tab === 'list' ? 'tab-active' : ''}`;
-            document.getElementById('tabHistory').className = `tab-btn ${tab === 'history' ? 'tab-active' : ''}`;
+        function shareList() {
+            const listText = items.filter(i => !i.checked).map(i => `・${i.text}`).join('\n');
+            if (!listText) return alert("未完了のアイテムがありません");
+            const finalContent = `【お買い物リスト】\n${listText}`;
+            if (navigator.share) {
+                navigator.share({ title: 'お買い物リスト', text: finalContent });
+            } else {
+                navigator.clipboard.writeText(finalContent);
+                alert("リストをクリップボードにコピーしました");
+            }
         }
 
         function render() {
             const listEl = document.getElementById('shoppingList');
-            const historyEl = document.getElementById('historyList');
-            const tplContainer = document.getElementById('templateContainer');
-            
-            tplContainer.innerHTML = myTemplates.length ? '' : '<p style="color:#d1d5db;font-size:0.7rem;">定番品を登録してください</p>';
-            myTemplates.forEach(name => {
-                const span = document.createElement('div');
-                span.className = "chip";
-                span.onclick = () => addFromTemplate(name);
-                span.innerHTML = `＋${name} <span class="chip-delete" onclick="removeTemplate(event, '${name}')">×</span>`;
-                tplContainer.appendChild(span);
-            });
+            const tplEl = document.getElementById('templateContainer');
+            let total = 0;
 
-            listEl.innerHTML = items.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">リストは空です</p>';
-            items.forEach(item => {
-                const isTemplate = myTemplates.includes(item.text);
+            // 定番エリア
+            tplEl.innerHTML = myTemplates.map(t => `
+                <div class="chip" onclick="items.push({id:Date.now(), text:'${t}', checked:false, price:0}); save();">
+                    ＋${t} <span class="chip-delete" onclick="removeTemplate(event, '${t}')">×</span>
+                </div>
+            `).join('') || '<p style="color:#d1d5db;font-size:0.7rem;">定番を登録してください</p>';
+
+            // メインリスト
+            listEl.innerHTML = '';
+            items.forEach((item, index) => {
+                if (item.checked) total += item.price;
                 const div = document.createElement('div');
-                div.className = "item-card";
+                div.className = `item-card ${item.checked ? 'checked' : ''}`;
+                div.draggable = true;
                 div.innerHTML = `
-                    <div class="item-content" onclick="toggleCheck(${item.id})">
-                        <input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox">
-                        <span class="${item.checked ? 'checked' : ''}">${item.text}</span>
+                    <div class="drag-handle">⠿</div>
+                    <div class="item-content">
+                        <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${item.id})" class="checkbox">
+                        <span class="item-text" onclick="toggleCheck(${item.id})">${item.text}</span>
+                        <input type="number" class="price-input" placeholder="¥" value="${item.price || ''}" 
+                               onchange="updatePrice(${item.id}, this.value)" onclick="event.stopPropagation()">
                     </div>
                     <div class="item-actions">
-                        <button onclick="saveAsTemplate('${item.text}')" class="btn-star ${isTemplate ? 'active' : ''}" title="定番に追加">
-                            ${isTemplate ? '★' : '☆'}
-                        </button>
+                        <button onclick="saveAsTemplate('${item.text}')" class="btn-star ${myTemplates.includes(item.text) ? 'active' : ''}">★</button>
                         <button onclick="deleteItem(${item.id}, 'items')" class="btn-delete">✕</button>
                     </div>
                 `;
+                
+                // ドラッグ＆ドロップイベント
+                div.addEventListener('dragstart', () => div.classList.add('dragging'));
+                div.addEventListener('dragend', () => {
+                    div.classList.remove('dragging');
+                    reorderItems();
+                });
                 listEl.appendChild(div);
             });
 
-            historyEl.innerHTML = history.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
-            history.forEach(item => {
-                const div = document.createElement('div');
-                div.className = "item-card";
-                div.style.opacity = "0.7";
-                div.innerHTML = `
-                    <div class="item-content" onclick="restoreItem(${item.id})">
-                        <span style="font-size:0.875rem;">↩️ ${item.text}</span>
-                    </div>
-                    <button onclick="deleteItem(${item.id}, 'history')" class="btn-delete">✕</button>
-                `;
-                historyEl.appendChild(div);
-            });
+            document.getElementById('totalPrice').innerText = total.toLocaleString();
+            
+            // 履歴（簡略化）
+            const histEl = document.getElementById('historyList');
+            histEl.innerHTML = history.map(h => `
+                <div class="item-card" style="opacity:0.6" onclick="restoreItem(${h.id})">
+                    <div style="flex:1">↩️ ${h.text}</div>
+                    <button onclick="deleteItem(${h.id}, 'hist')" class="btn-delete">✕</button>
+                </div>
+            `).join('') || '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
         }
+
+        // ドラッグによる並び替えのロジック
+        function reorderItems() {
+            const cards = [...document.querySelectorAll('#shoppingList .item-card')];
+            const newItems = cards.map(card => {
+                const text = card.querySelector('.item-text').innerText;
+                const id = items.find(i => i.text === text).id; // IDで紐付け
+                return items.find(i => i.id === id);
+            });
+            items = newItems;
+            localStorage.setItem('shop_items_v2', JSON.stringify(items));
+        }
+
+        // ドラッグオーバー時の挙動
+        document.getElementById('shoppingList').addEventListener('dragover', e => {
+            e.preventDefault();
+            const dragging = document.querySelector('.dragging');
+            const siblings = [...document.querySelectorAll('#shoppingList .item-card:not(.dragging)')];
+            const nextSibling = siblings.find(sibling => e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2);
+            document.getElementById('shoppingList').insertBefore(dragging, nextSibling);
+        });
+
+        // 既存の基本機能
+        function toggleButtons() { const v = document.getElementById('itemInput').value.trim(); document.getElementById('tplBtn').classList.toggle('hidden', v===''); }
+        function archiveChecked() { history = [...items.filter(i=>i.checked), ...history].slice(0,50); items = items.filter(i=>!i.checked); save(); }
+        function restoreItem(id) { const i = history.find(h=>h.id===id); items.push({...i, id:Date.now()}); history = history.filter(h=>h.id!==id); save(); switchTab('list'); }
+        function deleteItem(id, type) { if(type==='items') items=items.filter(i=>i.id!==id); else history=history.filter(h=>h.id!==id); save(); }
+        function clearHistory() { if(confirm('消去？')) { history=[]; save(); } }
+        function switchTab(tab) { 
+            document.getElementById('listView').classList.toggle('hidden', tab!=='list');
+            document.getElementById('historyView').classList.toggle('hidden', tab!=='history');
+            document.getElementById('tabList').className = `tab-btn ${tab==='list'?'tab-active':''}`;
+            document.getElementById('tabHistory').className = `tab-btn ${tab==='history'?'tab-active':''}`;
+        }
+        function startVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return;
+            const rec = new SpeechRecognition(); rec.lang = 'ja-JP';
+            rec.onstart = () => document.getElementById('micBtn').classList.add('recording');
+            rec.onend = () => document.getElementById('micBtn').classList.remove('recording');
+            rec.onresult = (e) => { document.getElementById('itemInput').value = e.results[0][0].transcript; addItem(); };
+            rec.start();
+        }
+
         render();
     </script>
 </body>
