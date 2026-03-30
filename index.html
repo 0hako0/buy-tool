@@ -4,9 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>お買い物リスト</title>
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="お買い物リスト">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
+    
     <style>
         :root {
             --primary: #3b82f6; --bg: #f3f4f6; --text-main: #1f2937;
@@ -89,7 +92,7 @@
     </div>
 
     <div id="historyView" class="hidden">
-        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px; text-align:center;">アイテム名をタップで再追加</div>
+        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:10px; text-align:center;">タップで再追加</div>
         <div id="historyList"></div>
     </div>
 </div>
@@ -100,7 +103,7 @@
 </div>
 
 <script>
-    const STORAGE_KEY = 'shop_vFinal_FullSpec_Revised';
+    const STORAGE_KEY = 'shop_vFinal_PWA_Ready';
     let items = JSON.parse(localStorage.getItem(STORAGE_KEY+'_i')) || [];
     let hist = JSON.parse(localStorage.getItem(STORAGE_KEY+'_h')) || [];
     let tpls = JSON.parse(localStorage.getItem(STORAGE_KEY+'_t')) || [];
@@ -117,7 +120,7 @@
         const val = text || input.value.trim();
         if (!val) return;
 
-        // 二重登録ガード
+        // 重複ガード
         if (!text && items.find(i => i.text === val && !i.checked)) {
             alert('「' + val + '」は既に入っています');
             input.value = '';
