@@ -36,22 +36,21 @@
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         
         .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; }
+        .num-input { width: 45px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: center; font-size: 0.85rem; }
+        .price-input { width: 80px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: right; font-size: 0.85rem; }
         .month-summary-bar { background: #374151; color: #ffffff; padding: 0.5rem 1rem; border-radius: 0.5rem; margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .item-card { display: flex; flex-direction: column; background: var(--white); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px var(--card-shadow); }
+        .item-card { background: var(--white); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px var(--card-shadow); }
         .item-main { display: flex; align-items: center; gap: 0.4rem; }
         .item-text { flex: 1; font-size: 1rem; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .item-checked { text-decoration: line-through; color: var(--text-muted); opacity: 0.6; }
-        
-        .num-input { width: 40px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: center; font-size: 0.85rem; }
-        .price-input { width: 75px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: right; font-size: 0.85rem; }
-        
-        .tax-btn { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #d1d5db; background: var(--bg); color: var(--text-muted); cursor: pointer; }
+        .tax-btn { font-size: 0.65rem; padding: 4px 8px; border-radius: 4px; border: 1px solid #d1d5db; background: var(--bg); color: var(--text-muted); cursor: pointer; }
         .tax-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .final-price { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-left: auto; }
+        .final-price { font-size: 0.8rem; color: var(--accent); font-weight: bold; margin-left: auto; }
         .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 100; }
         .total-amount { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .history-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.05); cursor: pointer; }
+        .chip { display: flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -59,16 +58,16 @@
 <div class="container">
     <h1>🛒 お買い物リスト</h1>
 
-    <div class="tabs">
-        <button onclick="switchTab('list')" id="tabList" class="tab-btn tab-active">リスト</button>
-        <button onclick="switchTab('history')" id="tabHistory" class="tab-btn">履歴</button>
+    <div class="tabs" role="tablist">
+        <button onclick="switchTab('list')" id="tabList" class="tab-btn tab-active" role="tab">リスト</button>
+        <button onclick="switchTab('history')" id="tabHistory" class="tab-btn" role="tab">履歴</button>
     </div>
 
     <div id="listView">
         <div class="card">
             <div class="input-group">
-                <input type="text" id="itemInput" name="newItem" placeholder="何を買う？" aria-label="新規アイテム入力">
-                <button onclick="startVoice()" id="micBtn" class="mic-btn" aria-label="音声入力開始">🎙️</button>
+                <input type="text" id="itemInput" name="newItemName" placeholder="何を買う？" aria-label="新規アイテム名">
+                <button onclick="startVoice()" id="micBtn" class="mic-btn" aria-label="音声入力">🎙️</button>
                 <button onclick="addItem()" id="addBtn" class="btn-add">追加</button>
             </div>
             <div id="templateContainer" style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:10px;"></div>
@@ -78,10 +77,9 @@
         <div style="margin-top:2rem; opacity:0.5; text-align:center;">
             <details>
                 <summary style="font-size:0.7rem; cursor:pointer;">設定・バックアップ</summary>
-                <textarea id="dataExchange" name="dataBackup" style="width:100%; height:60px; font-size:0.7rem; margin:5px 0; padding:5px;" placeholder="JSON/CSVデータ"></textarea>
+                <textarea id="dataExchange" name="rawBackupData" style="width:100%; height:60px; font-size:0.7rem; margin:5px 0; padding:5px;" placeholder="JSONデータ" aria-label="バックアップ"></textarea>
                 <div style="display:flex; gap:5px; justify-content:center; margin-top:5px;">
-                    <button onclick="exportJSON()" style="font-size:0.65rem;">JSON</button>
-                    <button onclick="exportCSV()" style="font-size:0.65rem;">CSV保存</button>
+                    <button onclick="exportJSON()" style="font-size:0.65rem;">JSON出力</button>
                     <button onclick="importData()" style="font-size:0.65rem;">読込</button>
                 </div>
             </details>
@@ -99,23 +97,36 @@
 </div>
 
 <script>
-    const STORAGE_KEY = 'shop_vFinal_v4_Attr';
-    let items = JSON.parse(localStorage.getItem(STORAGE_KEY+'_i')) || [];
-    let hist = JSON.parse(localStorage.getItem(STORAGE_KEY+'_h')) || [];
-    let tpls = JSON.parse(localStorage.getItem(STORAGE_KEY+'_t')) || [];
+    // キーを固定してリロード時の不整合を防ぐ
+    const STORAGE_KEY = 'shopping_app_v1';
+    
+    let items = [];
+    let hist = [];
+    let tpls = [];
+
+    // 初期読み込みを関数化して安全に行う
+    function loadData() {
+        try {
+            items = JSON.parse(localStorage.getItem(STORAGE_KEY + '_items')) || [];
+            hist = JSON.parse(localStorage.getItem(STORAGE_KEY + '_hist')) || [];
+            tpls = JSON.parse(localStorage.getItem(STORAGE_KEY + '_tpls')) || [];
+        } catch (e) {
+            console.error("Data load error", e);
+            items = []; hist = []; tpls = [];
+        }
+    }
 
     function save() {
-        localStorage.setItem(STORAGE_KEY+'_i', JSON.stringify(items));
-        localStorage.setItem(STORAGE_KEY+'_h', JSON.stringify(hist));
-        localStorage.setItem(STORAGE_KEY+'_t', JSON.stringify(tpls));
+        localStorage.setItem(STORAGE_KEY + '_items', JSON.stringify(items));
+        localStorage.setItem(STORAGE_KEY + '_hist', JSON.stringify(hist));
+        localStorage.setItem(STORAGE_KEY + '_tpls', JSON.stringify(tpls));
         render();
     }
 
     function addItem(text = null, qty = 1, price = 0, tax = null) {
         const val = text || document.getElementById('itemInput').value.trim();
         if (!val) return;
-        if (!text && items.find(i => i.text === val && !i.checked)) { alert('既に入っています'); return; }
-        items.push({ id: Date.now(), text: val, checked: false, price: price, qty: qty || 1, tax: tax });
+        items.push({ id: Date.now() + Math.random(), text: val, checked: false, price: price, qty: qty || 1, tax: tax });
         if(!text) document.getElementById('itemInput').value = '';
         save();
     }
@@ -125,10 +136,8 @@
         if (!SpeechRecognition) return;
         const rec = new SpeechRecognition(); rec.lang = 'ja-JP';
         const btn = document.getElementById('micBtn');
-        const reset = () => { btn.classList.remove('recording'); btn.textContent = '🎙️'; };
         rec.onstart = () => { btn.classList.add('recording'); btn.textContent = '🔴'; };
-        rec.onend = () => setTimeout(reset, 500);
-        rec.onerror = reset;
+        rec.onend = () => { btn.classList.remove('recording'); btn.textContent = '🎙️'; };
         rec.onresult = (e) => addItem(e.results[0][0].transcript.replace(/[。．]$/, ""));
         rec.start();
     }
@@ -136,27 +145,109 @@
     function archiveChecked() {
         const checked = items.filter(i => i.checked);
         const total = checked.reduce((s, i) => s + Math.floor((i.price * i.qty) * (1 + (i.tax||0)/100)), 0);
-        if (!checked.length || total === 0) return alert("金額入りのチェック済みがありません");
+        if (!checked.length || total === 0) return alert("金額とチェックを確認してください");
+        
         const now = new Date();
         hist.unshift({
-            id: Date.now(), date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`,
-            monthKey: `${now.getFullYear()}年${now.getMonth()+1}月`, total: total,
+            id: Date.now(),
+            date: `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`,
+            monthKey: `${now.getFullYear()}年${now.getMonth()+1}月`,
+            total: total,
             items: checked.map(i => ({...i, fPrice: Math.floor((i.price * i.qty) * (1 + (i.tax||0)/100))}))
         });
         items = items.filter(i => !i.checked);
         save();
     }
 
-    function exportCSV() {
-        let csv = "日付,月,商品名,単価,数量,税率,税込合計\n";
-        hist.forEach(g => g.items.forEach(it => { csv += `${g.date},${g.monthKey},${it.text},${it.price},${it.qty},${it.tax||0},${it.fPrice}\n`; }));
-        const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csv], { type: 'text/csv' });
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `history.csv`; a.click();
-    }
-
     function render() {
         const listEl = document.getElementById('shoppingList');
         const tplEl = document.getElementById('templateContainer');
+        const hListEl = document.getElementById('historyList');
+        if (!listEl || !tplEl || !hListEl) return;
+
         let currentTotal = 0;
 
-        tplEl.innerHTML = tpls.map(t => `<button class="chip" onclick="
+        // 定番チップの描画
+        tplEl.innerHTML = tpls.map(t => `
+            <div class="chip" onclick="addItem('${t}')">
+                ＋${t} 
+                <span style="margin-left:5px; opacity:0.3" onclick="event.stopPropagation(); tpls=tpls.filter(x=>x!=='${t}'); save();">×</span>
+            </div>
+        `).join('');
+
+        // リストの描画
+        listEl.innerHTML = items.map(i => {
+            const taxed = Math.floor((i.price * i.qty) * (1 + (i.tax||0)/100));
+            if (i.checked) currentTotal += taxed;
+            const prev = (function(){ for(let g of hist){ let f=g.items.find(x=>x.text===i.text); if(f) return f.price; } return null; })();
+            
+            return `
+                <div class="item-card">
+                    <div class="item-main">
+                        <input type="checkbox" name="chk-${i.id}" id="chk-${i.id}" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=this.checked; save();" style="width:22px;height:22px;">
+                        <span class="item-text ${i.checked?'item-checked':''}" onclick="const n=prompt('修正', '${i.text}'); if(n){items.find(x=>x.id===${i.id}).text=n; save();}">${i.text}</span>
+                        <button onclick="tpls.includes('${i.text}')?tpls=tpls.filter(x=>x!=='${i.text}'):tpls.push('${i.text}'); save();" style="border:none;background:none;color:${tpls.includes(i.text)?'#f59e0b':'#d1d5db'}; font-size:1.2rem;">★</button>
+                        <input type="number" name="qty-${i.id}" id="qty-${i.id}" inputmode="decimal" class="num-input" value="${i.qty}" placeholder="1" onchange="items.find(x=>x.id===${i.id}).qty=parseInt(this.value)||1; save();">
+                        <input type="number" name="prc-${i.id}" id="prc-${i.id}" inputmode="decimal" class="price-input" value="${i.price||''}" placeholder="単価" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
+                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;">✕</button>
+                    </div>
+                    <div style="display:flex; gap:8px; margin-top:8px; align-items:center;">
+                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="const it=items.find(x=>x.id===${i.id}); it.tax=(it.tax===8?null:8); save();">8%</button>
+                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="const it=items.find(x=>x.id===${i.id}); it.tax=(it.tax===10?null:10); save();">10%</button>
+                        ${prev?`<span style="font-size:0.6rem; color:var(--text-muted); text-decoration:underline;" onclick="items.find(x=>x.id===${i.id}).price=${prev}; save();">前回: ¥${prev}</span>`:''}
+                        <span class="final-price">税込 ¥${taxed.toLocaleString()}</span>
+                    </div>
+                </div>`;
+        }).join('');
+
+        document.getElementById('totalPrice').innerText = currentTotal.toLocaleString();
+        document.getElementById('archiveBtn').disabled = (currentTotal === 0);
+
+        // 履歴の描画
+        hListEl.innerHTML = '';
+        const mData = {};
+        hist.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
+        Object.keys(mData).forEach(m => {
+            hListEl.innerHTML += `<div class="month-summary-bar"><span>📅 ${m}</span><span>計 ¥${mData[m].t.toLocaleString()}</span></div>`;
+            mData[m].g.forEach(g => {
+                hListEl.innerHTML += `<div class="card" style="font-size:0.8rem; margin-top:8px; padding:10px;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:1px solid rgba(0,0,0,0.1); padding-bottom:5px; margin-bottom:5px;">
+                        <span>${g.date}</span><b style="color:var(--accent);">今回合計 ¥${g.total.toLocaleString()}</b>
+                    </div>
+                    ${g.items.map(it => `<div class="history-row" onclick="addItem('${it.text}', ${it.qty}, ${it.price}, ${it.tax}); switchTab('list');"><span>・${it.text} (${it.qty})</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
+                    <div style="text-align:right; margin-top:8px;"><button onclick="if(confirm('削除？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="border:none;background:none;color:#f87171;font-size:0.7rem;">記録を削除</button></div>
+                </div>`;
+            });
+        });
+    }
+
+    function switchTab(t) { 
+        document.getElementById('listView').classList.toggle('hidden', t!=='list');
+        document.getElementById('historyView').classList.toggle('hidden', t!=='history');
+        document.getElementById('tabList').className = `tab-btn ${t==='list'?'tab-active':''}`;
+        document.getElementById('tabHistory').className = `tab-btn ${t==='history'?'tab-active':''}`;
+        document.getElementById('footerBar').classList.toggle('hidden', t!=='list');
+    }
+
+    function exportJSON() {
+        const data = { items, hist, tpls };
+        document.getElementById('dataExchange').value = JSON.stringify(data);
+    }
+
+    function importData() {
+        try {
+            const data = JSON.parse(document.getElementById('dataExchange').value);
+            if (data.items) items = data.items;
+            if (data.hist) hist = data.hist;
+            if (data.tpls) tpls = data.tpls;
+            save();
+            alert("読み込み完了");
+        } catch (e) { alert("データ形式が正しくありません"); }
+    }
+
+    // 起動処理
+    loadData();
+    render();
+</script>
+</body>
+</html>
