@@ -8,6 +8,9 @@
     <style>
         .checked { text-decoration: line-through; color: #9ca3af; }
         .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: bold; }
+        /* 音声入力中のアニメーション */
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.2); opacity: 0.7; } 100% { transform: scale(1); opacity: 1; } }
+        .recording { animation: pulse 1s infinite; color: #ef4444 !important; }
     </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
@@ -15,22 +18,36 @@
     <div class="max-w-md mx-auto p-4">
         <h1 class="text-2xl font-bold text-center my-6 text-gray-800">🛒 お買い物アシスト</h1>
 
-        <div class="flex border-b mb-6 text-center bg-white rounded-t-lg">
+        <div class="flex border-b mb-6 text-center bg-white rounded-t-lg shadow-sm">
             <button onclick="switchTab('list')" id="tabList" class="flex-1 py-3 tab-active">リスト</button>
             <button onclick="switchTab('history')" id="tabHistory" class="flex-1 py-3 text-gray-500">履歴</button>
         </div>
 
         <div id="listView">
-            <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
-                <div class="flex gap-2">
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-4">
+                <div class="flex gap-2 items-center">
                     <input type="text" id="itemInput" placeholder="何を買う？" 
                         class="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
-                    <button onclick="addItem()" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-bold">追加</button>
+                    <button onclick="startVoice()" id="micBtn" class="text-gray-400 p-2 text-2xl transition-all" title="音声入力">🎙️</button>
+                    <button onclick="addItem()" class="bg-blue-500 text-white px-5 py-2 rounded-lg font-bold">追加</button>
+                </div>
+                
+                <div class="mt-4">
+                    <p class="text-[10px] text-gray-400 mb-2 font-bold uppercase tracking-wider">いつもの定番品</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="addTemplate('牛乳')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋牛乳</button>
+                        <button onclick="addTemplate('卵')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋卵</button>
+                        <button onclick="addTemplate('パン')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋パン</button>
+                        <button onclick="addTemplate('納豆')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋納豆</button>
+                        <button onclick="addTemplate('豆腐')" class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs border border-blue-100 hover:bg-blue-100 transition">＋豆腐</button>
+                    </div>
                 </div>
             </div>
-            <div id="shoppingList" class="space-y-2 text-sm"></div>
+
+            <div id="shoppingList" class="space-y-4 text-sm"></div>
+
             <div class="mt-8 text-center">
-                <button onclick="archiveChecked()" class="bg-gray-800 text-white px-4 py-2 rounded-full text-sm shadow-md">
+                <button onclick="archiveChecked()" class="bg-gray-800 text-white px-6 py-2 rounded-full text-sm shadow-md hover:bg-gray-700 transition">
                     チェック済みを履歴へ移動
                 </button>
             </div>
@@ -49,10 +66,24 @@
         let items = JSON.parse(localStorage.getItem('shopping_items')) || [];
         let history = JSON.parse(localStorage.getItem('shopping_history')) || [];
 
+        // カテゴリ辞書
+        const categories = {
+            '野菜・果物': ['にんじん', 'たまねぎ', 'キャベツ', 'レタス', 'バナナ', 'リンゴ', 'トマト', 'きゅうり', 'ねぎ'],
+            '肉・魚': ['肉', '鶏', '牛', '豚', 'ミンチ', '魚', '刺身', '鮭', 'サバ'],
+            '乳製品・卵': ['牛乳', '卵', 'チーズ', 'バター', 'ヨーグルト'],
+            '日用品': ['洗剤', 'ティッシュ', 'ペーパー', 'シャンプー', '石鹸', '電池']
+        };
+
         function save() {
             localStorage.setItem('shopping_items', JSON.stringify(items));
             localStorage.setItem('shopping_history', JSON.stringify(history));
             render();
+        }
+
+        // 1. 「いつもの」登録
+        function addTemplate(name) {
+            items.push({ id: Date.now(), text: name, checked: false });
+            save();
         }
 
         function addItem() {
@@ -63,29 +94,45 @@
             save();
         }
 
+        // 3. 音声入力機能
+        function startVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                alert("お使いのブラウザは音声入力に対応していません。");
+                return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'ja-JP';
+            const micBtn = document.getElementById('micBtn');
+
+            recognition.onstart = () => micBtn.classList.add('recording');
+            recognition.onend = () => micBtn.classList.remove('recording');
+
+            recognition.onresult = (event) => {
+                const text = event.results[0][0].transcript;
+                document.getElementById('itemInput').value = text;
+                addItem(); // 認識したらそのまま追加
+            };
+            recognition.start();
+        }
+
         function toggleCheck(id) {
             items = items.map(item => item.id === id ? { ...item, checked: !item.checked } : item);
             save();
         }
 
-        // チェック済みを履歴に移動
         function archiveChecked() {
             const checkedItems = items.filter(item => item.checked);
             if (checkedItems.length === 0) return;
-            
-            // 履歴の先頭に追加（新しい順）
             history = [...checkedItems.map(i => ({...i, checked: false})), ...history];
             items = items.filter(item => !item.checked);
-            
-            // 履歴が長くなりすぎないよう直近50件に制限
             history = history.slice(0, 50);
             save();
         }
 
-        // 履歴からリストに復活
         function restoreItem(id) {
             const item = history.find(h => h.id === id);
-            items.push({ ...item, id: Date.now() }); // 新しいIDでリストに追加
+            items.push({ ...item, id: Date.now() });
             history = history.filter(h => h.id !== id);
             save();
             switchTab('list');
@@ -106,33 +153,62 @@
             document.getElementById('tabHistory').className = `flex-1 py-3 ${tab === 'history' ? 'tab-active' : 'text-gray-500'}`;
         }
 
+        // 2. カテゴリ判定関数
+        function getCategory(text) {
+            for (const [cat, keywords] of Object.entries(categories)) {
+                if (keywords.some(k => text.includes(k))) return cat;
+            }
+            return 'その他';
+        }
+
         function render() {
             const listEl = document.getElementById('shoppingList');
             const historyEl = document.getElementById('historyList');
             
-            listEl.innerHTML = items.length ? '' : '<p class="text-center text-gray-400 py-10">リストは空です</p>';
-            items.forEach(item => {
-                const div = document.createElement('div');
-                div.className = "flex items-center justify-between bg-white p-4 rounded-lg shadow-sm";
-                div.innerHTML = `
-                    <div class="flex items-center gap-3 flex-1" onclick="toggleCheck(${item.id})">
-                        <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-5 h-5 rounded border-gray-300 text-blue-500">
-                        <p class="font-medium ${item.checked ? 'checked' : ''}">${item.text}</p>
-                    </div>
-                    <button onclick="deleteItem(${item.id}, 'items')" class="text-gray-200 hover:text-red-400">✕</button>
-                `;
-                listEl.appendChild(div);
-            });
+            // リスト表示（カテゴリ別にグループ化）
+            listEl.innerHTML = '';
+            if (items.length === 0) {
+                listEl.innerHTML = '<p class="text-center text-gray-400 py-10">リストは空です</p>';
+            } else {
+                const grouped = items.reduce((acc, item) => {
+                    const cat = getCategory(item.text);
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat].push(item);
+                    return acc;
+                }, {});
 
+                // カテゴリ順に表示
+                for (const [cat, catItems] of Object.entries(grouped)) {
+                    const catTitle = document.createElement('p');
+                    catTitle.className = "text-[10px] font-bold text-blue-400 ml-1 uppercase tracking-widest";
+                    catTitle.innerText = cat;
+                    listEl.appendChild(catTitle);
+
+                    catItems.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = "flex items-center justify-between bg-white p-4 rounded-lg shadow-sm mb-2";
+                        div.innerHTML = `
+                            <div class="flex items-center gap-3 flex-1" onclick="toggleCheck(${item.id})">
+                                <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-5 h-5 rounded border-gray-300 text-blue-500 pointer-events-none">
+                                <p class="font-medium ${item.checked ? 'checked' : ''}">${item.text}</p>
+                            </div>
+                            <button onclick="deleteItem(${item.id}, 'items')" class="text-gray-200 hover:text-red-400 px-2">✕</button>
+                        `;
+                        listEl.appendChild(div);
+                    });
+                }
+            }
+
+            // 履歴表示（シンプルに）
             historyEl.innerHTML = history.length ? '' : '<p class="text-center text-gray-400 py-10">履歴はありません</p>';
             history.forEach(item => {
                 const div = document.createElement('div');
                 div.className = "flex items-center justify-between bg-white/60 p-3 rounded-lg border border-dashed border-gray-300";
                 div.innerHTML = `
                     <div class="flex-1 py-1" onclick="restoreItem(${item.id})">
-                        <p class="text-gray-600">↩️ ${item.text}</p>
+                        <p class="text-gray-600 text-sm">↩️ ${item.text}</p>
                     </div>
-                    <button onclick="deleteItem(${item.id}, 'history')" class="text-gray-200 hover:text-red-400">✕</button>
+                    <button onclick="deleteItem(${item.id}, 'history')" class="text-gray-200 hover:text-red-400 px-2">✕</button>
                 `;
                 historyEl.appendChild(div);
             });
