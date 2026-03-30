@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>お買い物メモ & 履歴</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .checked { text-decoration: line-through; color: #9ca3af; }
+        .tab-active { border-bottom: 3px solid #3b82f6; color: #3b82f6; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+    <div class="max-w-md mx-auto p-4">
+        <h1 class="text-2xl font-bold text-center my-6 text-gray-800">🛒 お買い物アシスト</h1>
+
+        <div class="flex border-b mb-6 text-center bg-white rounded-t-lg">
+            <button onclick="switchTab('list')" id="tabList" class="flex-1 py-3 tab-active">リスト</button>
+            <button onclick="switchTab('history')" id="tabHistory" class="flex-1 py-3 text-gray-500">履歴</button>
+        </div>
+
+        <div id="listView">
+            <div class="bg-white p-4 rounded-xl shadow-sm mb-6">
+                <div class="flex gap-2">
+                    <input type="text" id="itemInput" placeholder="何を買う？" 
+                        class="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400">
+                    <button onclick="addItem()" class="bg-blue-500 text-white px-6 py-2 rounded-lg font-bold">追加</button>
+                </div>
+            </div>
+            <div id="shoppingList" class="space-y-2 text-sm"></div>
+            <div class="mt-8 text-center">
+                <button onclick="archiveChecked()" class="bg-gray-800 text-white px-4 py-2 rounded-full text-sm shadow-md">
+                    チェック済みを履歴へ移動
+                </button>
+            </div>
+        </div>
+
+        <div id="historyView" class="hidden">
+            <p class="text-xs text-center text-gray-500 mb-4">過去に買ったものです。タップでリストに戻せます。</p>
+            <div id="historyList" class="space-y-2 opacity-80"></div>
+            <div class="mt-8 text-center">
+                <button onclick="clearHistory()" class="text-xs text-red-400 hover:underline">履歴をすべて消去</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let items = JSON.parse(localStorage.getItem('shopping_items')) || [];
+        let history = JSON.parse(localStorage.getItem('shopping_history')) || [];
+
+        function save() {
+            localStorage.setItem('shopping_items', JSON.stringify(items));
+            localStorage.setItem('shopping_history', JSON.stringify(history));
+            render();
+        }
+
+        function addItem() {
+            const input = document.getElementById('itemInput');
+            if (!input.value.trim()) return;
+            items.push({ id: Date.now(), text: input.value, checked: false });
+            input.value = '';
+            save();
+        }
+
+        function toggleCheck(id) {
+            items = items.map(item => item.id === id ? { ...item, checked: !item.checked } : item);
+            save();
+        }
+
+        // チェック済みを履歴に移動
+        function archiveChecked() {
+            const checkedItems = items.filter(item => item.checked);
+            if (checkedItems.length === 0) return;
+            
+            // 履歴の先頭に追加（新しい順）
+            history = [...checkedItems.map(i => ({...i, checked: false})), ...history];
+            items = items.filter(item => !item.checked);
+            
+            // 履歴が長くなりすぎないよう直近50件に制限
+            history = history.slice(0, 50);
+            save();
+        }
+
+        // 履歴からリストに復活
+        function restoreItem(id) {
+            const item = history.find(h => h.id === id);
+            items.push({ ...item, id: Date.now() }); // 新しいIDでリストに追加
+            history = history.filter(h => h.id !== id);
+            save();
+            switchTab('list');
+        }
+
+        function deleteItem(id, listType) {
+            if (listType === 'items') items = items.filter(i => i.id !== id);
+            else history = history.filter(i => i.id !== id);
+            save();
+        }
+
+        function clearHistory() { if(confirm('履歴を空にしますか？')) { history = []; save(); } }
+
+        function switchTab(tab) {
+            document.getElementById('listView').classList.toggle('hidden', tab !== 'list');
+            document.getElementById('historyView').classList.toggle('hidden', tab !== 'history');
+            document.getElementById('tabList').className = `flex-1 py-3 ${tab === 'list' ? 'tab-active' : 'text-gray-500'}`;
+            document.getElementById('tabHistory').className = `flex-1 py-3 ${tab === 'history' ? 'tab-active' : 'text-gray-500'}`;
+        }
+
+        function render() {
+            const listEl = document.getElementById('shoppingList');
+            const historyEl = document.getElementById('historyList');
+            
+            listEl.innerHTML = items.length ? '' : '<p class="text-center text-gray-400 py-10">リストは空です</p>';
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between bg-white p-4 rounded-lg shadow-sm";
+                div.innerHTML = `
+                    <div class="flex items-center gap-3 flex-1" onclick="toggleCheck(${item.id})">
+                        <input type="checkbox" ${item.checked ? 'checked' : ''} class="w-5 h-5 rounded border-gray-300 text-blue-500">
+                        <p class="font-medium ${item.checked ? 'checked' : ''}">${item.text}</p>
+                    </div>
+                    <button onclick="deleteItem(${item.id}, 'items')" class="text-gray-200 hover:text-red-400">✕</button>
+                `;
+                listEl.appendChild(div);
+            });
+
+            historyEl.innerHTML = history.length ? '' : '<p class="text-center text-gray-400 py-10">履歴はありません</p>';
+            history.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "flex items-center justify-between bg-white/60 p-3 rounded-lg border border-dashed border-gray-300";
+                div.innerHTML = `
+                    <div class="flex-1 py-1" onclick="restoreItem(${item.id})">
+                        <p class="text-gray-600">↩️ ${item.text}</p>
+                    </div>
+                    <button onclick="deleteItem(${item.id}, 'history')" class="text-gray-200 hover:text-red-400">✕</button>
+                `;
+                historyEl.appendChild(div);
+            });
+        }
+
+        render();
+    </script>
+</body>
+</html>
