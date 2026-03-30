@@ -3,37 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>お買い物リスト Pro</title>
+    <title>お買い物リスト</title>
     <style>
         :root {
-            --primary: #3b82f6; --bg: #111827; --text-main: #f9fafb;
-            --text-muted: #9ca3af; --white: #1f2937; --accent: #10b981;
-            --card-shadow: rgba(0,0,0,0.3);
+            --primary: #3b82f6; 
+            --bg: #111827; 
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af; 
+            --white: #1f2937; 
+            --accent: #10b981;
+            --card-shadow: rgba(0,0,0,0.4);
         }
         body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; padding-bottom: 140px; }
         .container { max-width: 448px; margin: 0 auto; padding: 1rem; }
+        
         .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 4px 6px var(--card-shadow); margin-bottom: 1rem; }
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
-        input[type="text"], textarea { flex: 1; padding: 0.75rem; border: 1px solid #374151; border-radius: 0.5rem; background: #374151; color: white; font-size: 16px; outline: none; }
-        .btn-add { background: var(--primary); color: white; padding: 0.75rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; }
-        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted); transition: 0.2s; padding: 0 5px; }
-        .mic-btn.recording { color: #ef4444; transform: scale(1.3); filter: drop-shadow(0 0 5px #ef4444); }
+        input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #374151; border-radius: 0.5rem; background: #374151; color: white; font-size: 16px; outline: none; }
+        
+        .btn-add { background: var(--primary); color: white; padding: 0.75rem 1.2rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; }
+        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; color: var(--text-muted); }
+        .mic-btn.recording { color: #ef4444; }
+
         .item-card { background: var(--white); padding: 0.8rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 2px 4px var(--card-shadow); }
         .item-main { display: flex; align-items: center; gap: 0.5rem; }
-        .item-text { flex: 1; font-weight: 500; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .item-text { flex: 1; font-weight: 500; }
         .item-checked { text-decoration: line-through; color: var(--text-muted); opacity: 0.5; }
+
         .num-input { width: 45px; padding: 0.4rem; border: 1px solid #4b5563; border-radius: 0.25rem; background: #374151; color: white; text-align: center; }
         .price-input { width: 80px; padding: 0.4rem; border: 1px solid #4b5563; border-radius: 0.25rem; background: #374151; color: white; text-align: right; }
-        .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-top: 1px solid #374151; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
+
+        .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #111827; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; z-index: 1000; border-top: 1px solid #374151; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); }
         .total-amount { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
+
         .tabs { display: flex; background: var(--white); border-radius: 0.5rem; margin-bottom: 1rem; overflow: hidden; }
         .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; }
         .tab-active { background: var(--primary); color: white; font-weight: bold; }
+        
         .hidden { display: none !important; }
         .tax-btn { font-size: 0.7rem; padding: 4px 8px; border: 1px solid #4b5563; border-radius: 4px; background: #374151; color: white; cursor: pointer; }
-        .tax-btn.active { background: var(--primary); border-color: var(--primary); }
-        .chip { padding: 4px 12px; border-radius: 99px; background: #1e3a8a; color: #60a5fa; font-size: 0.75rem; border: none; cursor: pointer; }
-        .prev-price { font-size: 0.65rem; color: var(--text-muted); text-decoration: underline; cursor: pointer; }
+        .tax-btn.active { background: var(--primary); }
+        .chip { padding: 4px 12px; border-radius: 99px; background: #1e3a8a; color: #60a5fa; font-size: 0.75rem; border: none; cursor: pointer; margin-right: 5px; }
+        .prev-price { font-size: 0.65rem; color: var(--text-muted); text-decoration: underline; margin-left: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -49,24 +60,13 @@
     <div id="listView">
         <div class="card">
             <div class="input-group">
-                <input type="text" id="itemInput" name="newItem" placeholder="何を買う？" onkeypress="if(event.key==='Enter') addItem()">
-                <button onclick="startVoice()" id="micBtn" class="mic-btn" aria-label="音声入力">🎙️</button>
+                <input type="text" id="itemInput" placeholder="何を買う？" onkeypress="if(event.key==='Enter') addItem()">
+                <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
                 <button onclick="addItem()" class="btn-add">追加</button>
             </div>
             <div id="templateContainer" style="display:flex; flex-wrap:wrap; gap:0.4rem; margin-top:10px;"></div>
         </div>
         <div id="shoppingList"></div>
-
-        <div style="margin-top:2rem; opacity:0.6; text-align:center;">
-            <details>
-                <summary style="font-size:0.75rem; cursor:pointer;">設定・バックアップ</summary>
-                <textarea id="dataExchange" style="width:100%; height:80px; font-size:0.7rem; margin-top:10px;" placeholder="ここにデータを貼り付け"></textarea>
-                <div style="display:flex; gap:10px; justify-content:center; margin-top:5px;">
-                    <button onclick="exportData()" style="font-size:0.7rem;">JSON出力</button>
-                    <button onclick="importData()" style="font-size:0.7rem;">読み込み</button>
-                </div>
-            </details>
-        </div>
     </div>
 
     <div id="historyView" class="hidden">
@@ -96,13 +96,12 @@
         const input = document.getElementById('itemInput');
         const val = (text || input.value).trim();
         if (!val) return;
-
+        // 2重入力防止
         if (items.some(i => i.text === val && !i.checked)) {
-            alert('「' + val + '」は既に入っています');
+            alert('既にリストにあります');
             input.value = '';
             return;
         }
-
         items.push({ id: Date.now() + Math.random(), text: val, checked: false, price: 0, qty: 1, tax: null });
         input.value = '';
         save();
@@ -110,21 +109,16 @@
 
     window.startVoice = function() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("音声認識非対応です");
+        if (!SpeechRecognition) return alert("非対応");
         const rec = new SpeechRecognition();
         rec.lang = 'ja-JP';
         const btn = document.getElementById('micBtn');
-
         rec.onstart = () => { btn.classList.add('recording'); btn.textContent = '🔴'; };
         rec.onresult = (e) => {
-            const res = e.results[0][0].transcript.replace(/[。．]$/, "");
-            addItem(res);
+            addItem(e.results[0][0].transcript.replace(/[。．]$/, ""));
+            rec.stop(); // 認識したら止める
         };
-        rec.onend = () => {
-            btn.classList.remove('recording');
-            btn.textContent = '🎙️';
-        };
-        rec.onerror = () => rec.stop();
+        rec.onend = () => { btn.classList.remove('recording'); btn.textContent = '🎙️'; };
         rec.start();
     };
 
@@ -138,8 +132,7 @@
 
     window.archiveChecked = function() {
         const checked = items.filter(i => i.checked);
-        if (!checked.length) return alert("チェックされた項目がありません");
-        
+        if (!checked.length) return;
         const total = checked.reduce((s, i) => s + Math.floor((i.price * i.qty) * (1 + (i.tax||0)/100)), 0);
         const now = new Date();
         hist.unshift({
@@ -152,23 +145,6 @@
         items = items.filter(i => !i.checked);
         save();
     };
-
-    function exportData() {
-        const data = { items, hist, tpls };
-        document.getElementById('dataExchange').value = JSON.stringify(data);
-        alert("JSONを書き出しました。コピーして保存してください。");
-    }
-
-    function importData() {
-        try {
-            const data = JSON.parse(document.getElementById('dataExchange').value);
-            if(data.items) items = data.items;
-            if(data.hist) hist = data.hist;
-            if(data.tpls) tpls = data.tpls;
-            save();
-            alert("読み込み完了しました");
-        } catch(e) { alert("不正な形式です"); }
-    }
 
     function render() {
         const listEl = document.getElementById('shoppingList');
@@ -193,18 +169,18 @@
             return `
                 <div class="item-card">
                     <div class="item-main">
-                        <input type="checkbox" id="chk-${i.id}" name="chk" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=this.checked; save();" style="width:24px;height:24px;">
+                        <input type="checkbox" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=this.checked; save();" style="width:24px;height:24px;">
                         <span class="item-text ${i.checked?'item-checked':''}" onclick="const n=prompt('修正', '${i.text}'); if(n){items.find(x=>x.id===${i.id}).text=n; save();}">${i.text}</span>
                         <button onclick="tpls.includes('${i.text}')?tpls=tpls.filter(x=>x!=='${i.text}'):tpls.push('${i.text}'); save();" style="border:none;background:none;color:${tpls.includes(i.text)?'#f59e0b':'#4b5563'}; font-size:1.2rem;">★</button>
-                        <input type="number" id="qty-${i.id}" name="qty" class="num-input" value="${i.qty}" onchange="items.find(x=>x.id===${i.id}).qty=parseInt(this.value)||1; save();">
-                        <input type="number" id="prc-${i.id}" name="price" class="price-input" value="${i.price||''}" placeholder="単価" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
+                        <input type="number" class="num-input" value="${i.qty}" onchange="items.find(x=>x.id===${i.id}).qty=parseInt(this.value)||1; save();">
+                        <input type="number" class="price-input" value="${i.price||''}" placeholder="単価" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
                     </div>
                     <div style="display:flex; gap:8px; margin-top:10px; align-items:center;">
                         <button class="tax-btn ${i.tax===8?'active':''}" onclick="const it=items.find(x=>x.id===${i.id}); it.tax=(it.tax===8?null:8); save();">8%</button>
                         <button class="tax-btn ${i.tax===10?'active':''}" onclick="const it=items.find(x=>x.id===${i.id}); it.tax=(it.tax===10?null:10); save();">10%</button>
                         ${lastPrice ? `<span class="prev-price" onclick="items.find(x=>x.id===${i.id}).price=${lastPrice}; save();">前回: ¥${lastPrice}</span>` : ''}
                         <span style="font-size:0.85rem; font-weight:bold; color:var(--accent); margin-left:auto;">税込 ¥${taxed.toLocaleString()}</span>
-                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;margin-left:10px;padding:5px;">✕</button>
+                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;margin-left:5px;">✕</button>
                     </div>
                 </div>`;
         }).join('');
@@ -215,14 +191,14 @@
         const mData = {};
         hist.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
         Object.keys(mData).forEach(m => {
-            hListEl.innerHTML += `<div style="background:#374151; padding:5px 10px; border-radius:5px; margin:15px 0 5px; font-size:0.8rem; display:flex; justify-content:space-between;"><span>📅 ${m}</span><span>合計 ¥${mData[m].t.toLocaleString()}</span></div>`;
+            hListEl.innerHTML += `<div style="background:#374151; padding:8px; border-radius:5px; margin:15px 0 5px; font-size:0.85rem; display:flex; justify-content:space-between;"><span>📅 ${m}</span><span>合計 ¥${mData[m].t.toLocaleString()}</span></div>`;
             mData[m].g.forEach(g => {
                 hListEl.innerHTML += `<div class="card" style="font-size:0.8rem; margin-top:8px;">
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #374151; padding-bottom:5px; margin-bottom:5px;">
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #4b5563; padding-bottom:5px; margin-bottom:5px;">
                         <span>${g.date}</span><b style="color:var(--accent);">¥${g.total.toLocaleString()}</b>
                     </div>
-                    ${g.items.map(it => `<div style="display:flex; justify-content:space-between; padding:3px 0; opacity:0.8;"><span>・${it.text} (${it.qty})</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
-                    <div style="text-align:right; margin-top:5px;"><button onclick="if(confirm('消去？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="border:none;background:none;color:#f87171;font-size:0.7rem;">記録削除</button></div>
+                    ${g.items.map(it => `<div style="display:flex; justify-content:space-between; padding:3px 0;"><span>・${it.text} (${it.qty})</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
+                    <div style="text-align:right;"><button onclick="if(confirm('削除？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="border:none;background:none;color:#f87171;font-size:0.7rem;">削除</button></div>
                 </div>`;
             });
         });
