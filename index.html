@@ -4,19 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>お買い物リスト</title>
-
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="お買い物リスト">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
-    <meta name="theme-color" content="#1f2937">
-
     <style>
         :root {
             --primary: #3b82f6; --bg: #f3f4f6; --text-main: #1f2937;
             --text-muted: #6b7280; --white: #ffffff; --accent: #10b981;
-            --card-shadow: rgba(0,0,0,0.1);
+            --fav: #f59e0b; --card-shadow: rgba(0,0,0,0.1);
         }
         @media (prefers-color-scheme: dark) {
             :root { --bg: #111827; --text-main: #f9fafb; --text-muted: #9ca3af; --white: #1f2937; }
@@ -25,50 +21,39 @@
         }
         body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 448px; margin: 0 auto; padding: 1rem; padding-bottom: 140px; }
-        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
         .tabs { display: flex; background: var(--white); border-radius: 0.5rem; overflow: hidden; margin-bottom: 1rem; box-shadow: 0 1px 2px var(--card-shadow); }
         .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; }
         .tab-active { background: var(--primary); color: white; font-weight: bold; }
-        
         .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px var(--card-shadow); margin-bottom: 1rem; }
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
         input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 16px; outline: none; }
-        
         .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
         .mic-btn.recording { animation: pulse 1s infinite; color: #ef4444; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
-        
+        @keyframes pulse { 0% { transform: scale(1.2); } 100% { transform: scale(1); } }
         .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; }
-        .btn-template { background: var(--accent); color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; font-size: 0.75rem; }
         .template-container { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 10px; }
         .chip { display: flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe; }
-        
         .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding: 0 0.5rem; }
-        .btn-clear-checked { font-size: 0.7rem; color: #ef4444; background: none; border: 1px solid #fee2e2; padding: 2px 8px; border-radius: 4px; cursor: pointer; }
-
+        .btn-clear { font-size: 0.7rem; color: #ef4444; background: none; border: 1px solid #fee2e2; padding: 2px 8px; border-radius: 4px; }
         .item-card { display: flex; flex-direction: column; background: var(--white); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px var(--card-shadow); }
-        .item-main { display: flex; align-items: center; gap: 0.8rem; }
-        .item-text { flex: 1; font-size: 1rem; border-bottom: 1px dashed transparent; min-height: 24px; }
-        
+        .item-main { display: flex; align-items: center; gap: 0.6rem; }
+        .item-text { flex: 1; font-size: 1rem; cursor: pointer; }
         .tax-controls { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
         .tax-btn { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #d1d5db; background: var(--bg); color: var(--text-muted); cursor: pointer; }
         .tax-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .bottom-price-hint { font-size: 0.65rem; color: var(--text-muted); text-decoration: underline dotted; }
         .final-price { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-left: auto; }
-        
-        .month-header { background: var(--text-main); color: var(--white); padding: 0.4rem 1rem; border-radius: 0.5rem; margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 0.85rem; font-weight: bold; display: flex; justify-content: space-between; }
-        .price-input { width: 80px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; font-size: 0.85rem; text-align: right; }
-        .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); z-index: 100; }
+        .price-input { width: 75px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; text-align: right; font-size: 0.85rem; }
+        .btn-star { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 0 5px; color: #d1d5db; transition: color 0.2s; }
+        .btn-star.is-fav { color: var(--fav); }
+        .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 1rem; display: flex; justify-content: space-between; align-items: center; padding-bottom: calc(1rem + env(safe-area-inset-bottom)); z-index: 100; }
         .total-amount { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
-        .btn-archive { background: var(--primary); color: white; border: none; padding: 0.8rem 1.25rem; border-radius: 0.75rem; font-weight: bold; }
-        .btn-archive:disabled { background: #4b5563; opacity: 0.5; }
         .hidden { display: none; }
+        .month-header { background: var(--text-main); color: var(--white); padding: 0.4rem 1rem; border-radius: 0.5rem; margin-top: 1rem; font-size: 0.85rem; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header"><h1>🛒 お買い物リスト</h1></div>
     <div class="tabs">
         <button onclick="switchTab('list')" id="tabList" class="tab-btn tab-active">リスト</button>
         <button onclick="switchTab('history')" id="tabHistory" class="tab-btn">履歴</button>
@@ -77,17 +62,15 @@
     <div id="listView">
         <div class="card">
             <div class="input-group">
-                <input type="text" id="itemInput" placeholder="何を買う？" oninput="toggleButtons()">
+                <input type="text" id="itemInput" placeholder="何を買う？">
                 <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
                 <button onclick="addItem()" id="addBtn" class="btn-add">追加</button>
-                <button onclick="saveAsTemplate(document.getElementById('itemInput').value)" id="tplBtn" class="btn-template hidden">定番</button>
             </div>
             <div id="templateContainer" class="template-container"></div>
         </div>
-        
         <div class="list-header">
-            <span style="font-size:0.75rem; color:var(--text-muted);">タップで編集</span>
-            <button onclick="clearChecked()" class="btn-clear-checked">済を削除</button>
+            <span style="font-size:0.7rem; color:var(--text-muted);">名前タップで編集 / ★で定番登録</span>
+            <button onclick="clearChecked()" class="btn-clear">済を削除</button>
         </div>
         <div id="shoppingList"></div>
     </div>
@@ -97,73 +80,68 @@
 
 <div class="footer-bar" id="footerBar">
     <div><div style="font-size:0.7rem; color:#9ca3af;">チェック済合計</div><div class="total-amount">¥ <span id="totalPrice">0</span></div></div>
-    <button id="archiveBtn" onclick="archiveChecked()" class="btn-archive">履歴に保存</button>
+    <button onclick="archiveChecked()" id="archiveBtn" style="background:var(--primary); color:white; border:none; padding:0.8rem 1.2rem; border-radius:0.5rem; font-weight:bold;">履歴に保存</button>
 </div>
 
 <script>
-    const SHOP_KEY_V3 = 'shop_v3_clean';
-    let sItems = JSON.parse(localStorage.getItem(SHOP_KEY_V3+'_i')) || [];
-    let sHist = JSON.parse(localStorage.getItem(SHOP_KEY_V3+'_h')) || [];
-    let sTpls = JSON.parse(localStorage.getItem(SHOP_KEY_V3+'_t')) || [];
+    const STORAGE_KEY = 'shop_vStar_Integrated';
+    let items = JSON.parse(localStorage.getItem(STORAGE_KEY+'_i')) || [];
+    let hist = JSON.parse(localStorage.getItem(STORAGE_KEY+'_h')) || [];
+    let tpls = JSON.parse(localStorage.getItem(STORAGE_KEY+'_t')) || [];
 
     function save() {
-        localStorage.setItem(SHOP_KEY_V3+'_i', JSON.stringify(sItems));
-        localStorage.setItem(SHOP_KEY_V3+'_h', JSON.stringify(sHist));
-        localStorage.setItem(SHOP_KEY_V3+'_t', JSON.stringify(sTpls));
+        localStorage.setItem(STORAGE_KEY+'_i', JSON.stringify(items));
+        localStorage.setItem(STORAGE_KEY+'_h', JSON.stringify(hist));
+        localStorage.setItem(STORAGE_KEY+'_t', JSON.stringify(tpls));
         render();
-    }
-
-    function toggleButtons() {
-        const v = document.getElementById('itemInput').value.trim();
-        document.getElementById('tplBtn').classList.toggle('hidden', v === '');
     }
 
     function addItem(text = null) {
         const input = document.getElementById('itemInput');
         const val = text || input.value.trim();
         if (!val) return;
-        sItems.push({ id: Date.now(), text: val, checked: false, price: 0, tax: null });
+        items.push({ id: Date.now(), text: val, checked: false, price: 0, tax: null });
         input.value = '';
-        toggleButtons();
+        save();
+    }
+
+    function toggleFavorite(text) {
+        if (tpls.includes(text)) {
+            tpls = tpls.filter(t => t !== text);
+        } else {
+            tpls.push(text);
+        }
         save();
     }
 
     function startVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("非対応ブラウザです");
+        if (!SpeechRecognition) return alert("非対応です");
         const rec = new SpeechRecognition(); rec.lang = 'ja-JP';
         rec.onstart = () => document.getElementById('micBtn').classList.add('recording');
         rec.onend = () => document.getElementById('micBtn').classList.remove('recording');
-        rec.onresult = (e) => {
-            const voiceResult = e.results[0][0].transcript.replace(/[。．]$/, "");
-            if (voiceResult) {
-                addItem(voiceResult); // 音声認識の結果を直接 addItem に渡して追加
-            }
-        };
+        rec.onresult = (e) => addItem(e.results[0][0].transcript.replace(/[。．]$/, ""));
         rec.start();
     }
 
-    function editItemName(id) {
-        const item = sItems.find(x => x.id === id);
-        const newName = prompt("名前を修正:", item.text);
-        if (newName && newName.trim()) { item.text = newName.trim(); save(); }
-    }
-
     function clearChecked() {
-        if (confirm('チェック済みを削除しますか？')) { sItems = sItems.filter(i => !i.checked); save(); }
+        if (confirm('チェック済みの項目をリストから削除しますか？')) {
+            items = items.filter(i => !i.checked);
+            save();
+        }
     }
 
     function archiveChecked() {
-        const checked = sItems.filter(i => i.checked);
+        const checked = items.filter(i => i.checked);
         const total = checked.reduce((s, i) => s + Math.floor(i.price * (1 + (i.tax||0)/100)), 0);
         if (!checked.length || total === 0) return alert("金額入りのチェック済み項目がありません");
         const now = new Date();
-        sHist.unshift({
+        hist.unshift({
             id: Date.now(), date: `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`,
             monthKey: `${now.getFullYear()}年${now.getMonth()+1}月`, total: total,
             items: checked.map(i => ({...i, fPrice: Math.floor(i.price * (1 + (i.tax||0)/100))}))
         });
-        sItems = sItems.filter(i => !i.checked);
+        items = items.filter(i => !i.checked);
         save();
     }
 
@@ -172,28 +150,33 @@
         const tplEl = document.getElementById('templateContainer');
         let currentTotal = 0;
 
-        tplEl.innerHTML = sTpls.map(t => `
+        // 定番チップの描画
+        tplEl.innerHTML = tpls.map(t => `
             <div class="chip" onclick="addItem('${t}')">
-                ＋${t} <span style="margin-left:5px; opacity:0.3" onclick="event.stopPropagation(); sTpls=sTpls.filter(x=>x!=='${t}'); save();">×</span>
+                ＋${t} <span style="margin-left:5px; opacity:0.3" onclick="event.stopPropagation(); tpls=tpls.filter(x=>x!=='${t}'); save();">×</span>
             </div>
         `).join('');
 
-        listEl.innerHTML = sItems.map(i => {
+        // リスト項目の描画
+        listEl.innerHTML = items.map(i => {
             const taxed = Math.floor(i.price * (1 + (i.tax||0)/100));
             if (i.checked) currentTotal += taxed;
-            const prev = (function(){ for(let g of sHist){ let f=g.items.find(x=>x.text===i.text); if(f) return f.price; } return null; })();
+            const prev = (function(){ for(let g of hist){ let f=g.items.find(x=>x.text===i.text); if(f) return f.price; } return null; })();
+            const isFav = tpls.includes(i.text);
+            
             return `
                 <div class="item-card">
                     <div class="item-main">
-                        <input type="checkbox" ${i.checked?'checked':''} onchange="sItems.find(x=>x.id===${i.id}).checked=!${i.checked}; save();" style="width:24px;height:24px;">
-                        <span class="item-text" onclick="editItemName(${i.id})">${i.text}</span>
-                        <input type="number" inputmode="decimal" class="price-input" placeholder="税抜" value="${i.price||''}" onchange="sItems.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
-                        <button onclick="sItems=sItems.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;font-size:1.2rem;padding-left:10px;">✕</button>
+                        <input type="checkbox" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=!${i.checked}; save();" style="width:26px;height:26px;">
+                        <span class="item-text" onclick="const n=prompt('名前を修正', '${i.text}'); if(n){items.find(x=>x.id===${i.id}).text=n; save();}">${i.text}</span>
+                        <button onclick="toggleFavorite('${i.text}')" class="btn-star ${isFav?'is-fav':''}">★</button>
+                        <input type="number" inputmode="decimal" class="price-input" placeholder="税抜" value="${i.price||''}" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
+                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;font-size:1.4rem;padding-left:10px;">✕</button>
                     </div>
                     <div class="tax-controls">
-                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="sItems.find(x=>x.id===${i.id}).tax=(sItems.find(x=>x.id===${i.id}).tax===8?null:8); save();">8%</button>
-                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="sItems.find(x=>x.id===${i.id}).tax=(sItems.find(x=>x.id===${i.id}).tax===10?null:10); save();">10%</button>
-                        ${prev?`<span class="bottom-price-hint" onclick="sItems.find(x=>x.id===${i.id}).price=${prev}; save();">前回: ¥${prev}</span>`:''}
+                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="items.find(x=>x.id===${i.id}).tax=(i.tax===8?null:8); save();">8%</button>
+                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="items.find(x=>x.id===${i.id}).tax=(i.tax===10?null:10); save();">10%</button>
+                        ${prev?`<span style="font-size:0.65rem; color:var(--text-muted); text-decoration:underline;" onclick="items.find(x=>x.id===${i.id}).price=${prev}; save();">前回: ¥${prev}</span>`:''}
                         <span class="final-price">税込 ¥${taxed.toLocaleString()}</span>
                     </div>
                 </div>
@@ -201,27 +184,26 @@
         }).join('');
 
         document.getElementById('totalPrice').innerText = currentTotal.toLocaleString();
-        document.getElementById('archiveBtn').disabled = (sItems.filter(i=>i.checked).length === 0 || currentTotal === 0);
-        
+        document.getElementById('archiveBtn').disabled = (currentTotal === 0);
+
+        // 履歴描画
         const hList = document.getElementById('historyList');
         hList.innerHTML = '';
         const mData = {};
-        sHist.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
+        hist.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
         Object.keys(mData).forEach(m => {
-            const head = document.createElement('div'); head.className = 'month-header'; head.innerHTML = `<span>📅 ${m}</span><span>計 ¥${mData[m].t.toLocaleString()}</span>`;
-            hList.appendChild(head);
+            hList.innerHTML += `<div class="month-header"><span>📅 ${m}</span><span>合計 ¥${mData[m].t.toLocaleString()}</span></div>`;
             mData[m].g.forEach(g => {
-                const c = document.createElement('div'); c.className = 'card'; c.style.fontSize = '0.8rem';
-                c.innerHTML = `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:5px;"><span>${g.date}</span><b>¥${g.total.toLocaleString()}</b></div>
-                    ${g.items.map(it => `<div style="display:flex; justify-content:space-between; opacity:0.7;"><span>・${it.text}</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
-                    <div style="text-align:right; margin-top:5px;"><button onclick="if(confirm('削除？')){sHist=sHist.filter(x=>x.id!==${g.id});save();}" style="background:none;border:none;color:#f87171;font-size:0.7rem;">削除</button></div>`;
-                hList.appendChild(c);
+                hList.innerHTML += `<div class="card" style="font-size:0.8rem; margin-top:8px;">
+                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:4px; margin-bottom:4px;"><span>${g.date}</span><b>¥${g.total.toLocaleString()}</b></div>
+                    ${g.items.map(it => `<div style="display:flex; justify-content:space-between; opacity:0.8;"><span>・${it.text}</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
+                    <div style="text-align:right; margin-top:6px;"><button onclick="if(confirm('削除しますか？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="border:none;background:none;color:#f87171;font-size:0.7rem;">削除</button></div>
+                </div>`;
             });
         });
-        if (sHist.length === 0) hList.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴はありません</p>';
+        if(hist.length === 0) hList.innerHTML = '<p style="text-align:center; color:#9ca3af; padding-top:2rem;">履歴はまだありません</p>';
     }
 
-    function saveAsTemplate(text) { if(text && !sTpls.includes(text)){ sTpls.push(text); save(); document.getElementById('itemInput').value=''; toggleButtons(); } }
     function switchTab(t) { 
         document.getElementById('listView').classList.toggle('hidden', t!=='list');
         document.getElementById('historyView').classList.toggle('hidden', t!=='history');
