@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>お買い物メモ & 履歴</title>
+    <title>お買い物メモ</title>
     <style>
         :root {
             --primary: #3b82f6;
-            --primary-hover: #2563eb;
             --bg: #f9fafb;
             --text-main: #1f2937;
             --text-muted: #9ca3af;
@@ -15,7 +14,7 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg);
             color: var(--text-main);
             margin: 0; padding: 0; min-height: 100vh;
@@ -24,42 +23,44 @@
         .container { max-width: 448px; margin: 0 auto; padding: 1rem; }
         h1 { font-size: 1.5rem; font-weight: bold; text-align: center; margin: 1.5rem 0; }
 
+        /* タブ */
         .tabs { display: flex; background: var(--white); border-bottom: 1px solid #e5e7eb; border-radius: 0.5rem 0.5rem 0 0; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
         .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 1rem; }
         .tab-active { border-bottom: 3px solid var(--primary); color: var(--primary); font-weight: bold; }
 
+        /* 入力エリア */
         .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 1rem; }
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
-        input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; outline: none; font-size: 16px; /* iOSのズーム防止 */ }
+        input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; outline: none; font-size: 16px; }
         
-        .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; font-size: 0.875rem; }
-        .btn-template { background: #10b981; color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; font-size: 0.75rem; white-space: nowrap; }
+        .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; }
+        .btn-template { background: #10b981; color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; font-weight: bold; cursor: pointer; font-size: 0.75rem; }
         
-        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 0.25rem; }
+        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
 
-        .template-section { margin-top: 1rem; border-top: 1px solid #f3f4f6; pt: 0.75rem; }
-        .template-label { font-size: 10px; color: var(--text-muted); font-weight: bold; margin: 0.75rem 0 0.5rem 0; text-transform: uppercase; display: flex; justify-content: space-between; }
+        /* 定番品セクション */
+        .template-section { margin-top: 1rem; border-top: 1px solid #f3f4f6; padding-top: 0.75rem; }
+        .template-label { font-size: 10px; color: var(--text-muted); font-weight: bold; margin-bottom: 0.5rem; text-transform: uppercase; }
         .template-container { display: flex; flex-wrap: wrap; gap: 0.5rem; }
         
-        /* 定番品チップ */
         .chip {
             display: flex; align-items: center; gap: 4px;
             background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe;
             padding: 0.25rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; cursor: pointer;
         }
-        .chip-delete { color: #f87171; font-weight: bold; margin-left: 2px; font-size: 14px; }
+        .chip-delete { color: #f87171; margin-left: 4px; font-weight: bold; }
 
+        /* リスト表示 */
         .list-container { display: flex; flex-direction: column; gap: 0.5rem; }
-        .category-title { font-size: 10px; font-weight: bold; color: #60a5fa; margin: 0.5rem 0 0.25rem 0.25rem; letter-spacing: 0.1em; }
         .item-card { display: flex; align-items: center; justify-content: space-between; background: var(--white); padding: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
         .item-content { display: flex; align-items: center; gap: 0.75rem; flex: 1; cursor: pointer; }
-        .checkbox { width: 1.25rem; height: 1.25rem; cursor: pointer; }
+        .checkbox { width: 1.25rem; height: 1.25rem; }
         .checked { text-decoration: line-through; color: var(--text-muted); }
         .btn-delete { color: #e5e7eb; border: none; background: none; font-size: 1.2rem; cursor: pointer; padding: 0 0.5rem; }
 
         .archive-btn { background: #1f2937; color: white; padding: 0.6rem 1.5rem; border-radius: 9999px; border: none; font-size: 0.875rem; margin-top: 2rem; cursor: pointer; }
         .hidden { display: none; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
         .recording { animation: pulse 1s infinite; color: #ef4444; }
     </style>
 </head>
@@ -83,7 +84,7 @@
                 </div>
                 
                 <div class="template-section">
-                    <p class="template-label"><span>いつもの定番品</span><span>タップで追加 / ×で削除</span></p>
+                    <p class="template-label">いつもの定番品</p>
                     <div id="templateContainer" class="template-container">
                         </div>
                 </div>
@@ -95,22 +96,15 @@
 
         <div id="historyView" class="hidden">
             <div id="historyList" class="list-container"></div>
-            <div style="text-align: center; margin-top: 2rem;"><button onclick="clearHistory()" style="color:#f87171; border:none; background:none; font-size:0.75rem; text-decoration:underline;">履歴をすべて消去</button></div>
+            <div style="text-align: center; margin-top: 2rem;"><button onclick="clearHistory()" style="color:#f87171; border:none; background:none; font-size:0.75rem; text-decoration:underline; cursor:pointer;">履歴をすべて消去</button></div>
         </div>
     </div>
 
     <script>
-        // データ初期化
         let items = JSON.parse(localStorage.getItem('shopping_items')) || [];
         let history = JSON.parse(localStorage.getItem('shopping_history')) || [];
-        let myTemplates = JSON.parse(localStorage.getItem('shopping_templates')) || ['牛乳', '卵', 'パン'];
-
-        const categories = {
-            '野菜・果物': ['にんじん', 'たまねぎ', 'キャベツ', 'レタス', 'バナナ', 'リンゴ', 'トマト', 'きゅうり'],
-            '肉・魚': ['肉', '鶏', '牛', '豚', 'ミンチ', '魚', '刺身'],
-            '乳製品・卵': ['牛乳', '卵', 'チーズ', 'バター', 'ヨーグルト'],
-            '日用品': ['洗剤', 'ティッシュ', 'ペーパー', 'シャンプー']
-        };
+        // 初期状態は空にする
+        let myTemplates = JSON.parse(localStorage.getItem('shopping_templates')) || [];
 
         function save() {
             localStorage.setItem('shopping_items', JSON.stringify(items));
@@ -119,13 +113,11 @@
             render();
         }
 
-        // 入力内容に応じてボタンを切り替える
         function toggleButtons() {
             const val = document.getElementById('itemInput').value.trim();
             document.getElementById('tplBtn').classList.toggle('hidden', val === "");
         }
 
-        // 定番品として保存
         function saveAsTemplate() {
             const val = document.getElementById('itemInput').value.trim();
             if (val && !myTemplates.includes(val)) {
@@ -136,9 +128,8 @@
             }
         }
 
-        // 定番品を削除
         function removeTemplate(e, name) {
-            e.stopPropagation(); // 親のクリックイベント（リスト追加）を防ぐ
+            e.stopPropagation();
             myTemplates = myTemplates.filter(t => t !== name);
             save();
         }
@@ -207,20 +198,13 @@
             document.getElementById('tabHistory').className = `tab-btn ${tab === 'history' ? 'tab-active' : ''}`;
         }
 
-        function getCategory(text) {
-            for (const [cat, keywords] of Object.entries(categories)) {
-                if (keywords.some(k => text.includes(k))) return cat;
-            }
-            return 'その他';
-        }
-
         function render() {
             const listEl = document.getElementById('shoppingList');
             const historyEl = document.getElementById('historyList');
             const tplContainer = document.getElementById('templateContainer');
             
-            // 定番品チップの描画
-            tplContainer.innerHTML = '';
+            // 定番品表示
+            tplContainer.innerHTML = myTemplates.length ? '' : '<p style="color:#d1d5db;font-size:0.7rem;">よく買うものを登録してください</p>';
             myTemplates.forEach(name => {
                 const span = document.createElement('div');
                 span.className = "chip";
@@ -229,35 +213,33 @@
                 tplContainer.appendChild(span);
             });
 
-            // メインリスト
+            // メインリスト（カテゴリなし・シンプル表示）
             listEl.innerHTML = items.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">リストは空です</p>';
-            if (items.length) {
-                const grouped = items.reduce((acc, item) => {
-                    const cat = getCategory(item.text);
-                    if (!acc[cat]) acc[cat] = [];
-                    acc[cat].push(item);
-                    return acc;
-                }, {});
-
-                for (const [cat, catItems] of Object.entries(grouped)) {
-                    const title = document.createElement('p');
-                    title.className = "category-title"; title.innerText = cat;
-                    listEl.appendChild(title);
-                    catItems.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = "item-card";
-                        div.innerHTML = `<div class="item-content" onclick="toggleCheck(${item.id})"><input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox"><span class="${item.checked ? 'checked' : ''}">${item.text}</span></div><button onclick="deleteItem(${item.id}, 'items')" class="btn-delete">✕</button>`;
-                        listEl.appendChild(div);
-                    });
-                }
-            }
+            items.forEach(item => {
+                const div = document.createElement('div');
+                div.className = "item-card";
+                div.innerHTML = `
+                    <div class="item-content" onclick="toggleCheck(${item.id})">
+                        <input type="checkbox" ${item.checked ? 'checked' : ''} class="checkbox">
+                        <span class="${item.checked ? 'checked' : ''}">${item.text}</span>
+                    </div>
+                    <button onclick="deleteItem(${item.id}, 'items')" class="btn-delete">✕</button>
+                `;
+                listEl.appendChild(div);
+            });
 
             // 履歴
             historyEl.innerHTML = history.length ? '' : '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
             history.forEach(item => {
                 const div = document.createElement('div');
-                div.className = "item-card history-item";
-                div.innerHTML = `<div class="item-content" onclick="restoreItem(${item.id})"><span style="font-size:0.875rem;color:#4b5563;">↩️ ${item.text}</span></div><button onclick="deleteItem(${item.id}, 'history')" class="btn-delete">✕</button>`;
+                div.className = "item-card";
+                div.style.opacity = "0.7";
+                div.innerHTML = `
+                    <div class="item-content" onclick="restoreItem(${item.id})">
+                        <span style="font-size:0.875rem;">↩️ ${item.text}</span>
+                    </div>
+                    <button onclick="deleteItem(${item.id}, 'history')" class="btn-delete">✕</button>
+                `;
                 historyEl.appendChild(div);
             });
         }
