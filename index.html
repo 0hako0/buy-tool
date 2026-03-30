@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>お買い物メモ Pro</title>
+    <title>お買い物プロ vFinal</title>
 
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/3081/3081840.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -23,30 +23,41 @@
         }
         body { font-family: -apple-system, sans-serif; background-color: var(--bg); color: var(--text-main); margin: 0; -webkit-tap-highlight-color: transparent; }
         .container { max-width: 448px; margin: 0 auto; padding: 1rem; padding-bottom: 140px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
         .tabs { display: flex; background: var(--white); border-radius: 0.5rem; overflow: hidden; margin-bottom: 1rem; box-shadow: 0 1px 2px var(--card-shadow); }
         .tab-btn { flex: 1; padding: 0.75rem; border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 0.9rem; }
         .tab-active { background: var(--primary); color: white; font-weight: bold; }
+        
         .card { background: var(--white); padding: 1rem; border-radius: 0.75rem; box-shadow: 0 1px 3px var(--card-shadow); margin-bottom: 1rem; }
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
         input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; font-size: 16px; outline: none; }
+        
         .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; }
         .mic-btn.recording { animation: pulse 1s infinite; color: #ef4444; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        
         .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; }
         .btn-template { background: var(--accent); color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; font-size: 0.75rem; }
         .template-container { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 10px; }
         .chip { display: flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe; }
+        
+        .list-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; padding: 0 0.5rem; }
+        .btn-clear-checked { font-size: 0.7rem; color: #ef4444; background: none; border: 1px solid #fee2e2; padding: 2px 8px; border-radius: 4px; cursor: pointer; }
+
         .item-card { display: flex; flex-direction: column; background: var(--white); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px var(--card-shadow); }
         .item-main { display: flex; align-items: center; gap: 0.8rem; }
-        .item-text { flex: 1; font-size: 1rem; }
+        .item-text { flex: 1; font-size: 1rem; border-bottom: 1px dashed transparent; }
+        .item-text:active { background: #f3f4f6; } /* タップ感 */
+        
         .tax-controls { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
         .tax-btn { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #d1d5db; background: var(--bg); color: var(--text-muted); cursor: pointer; }
         .tax-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .bottom-price-hint { font-size: 0.65rem; color: var(--text-muted); text-decoration: underline dotted; }
         .final-price { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-left: auto; }
+        
         .month-header { background: var(--text-main); color: var(--white); padding: 0.4rem 1rem; border-radius: 0.5rem; margin-top: 1.5rem; margin-bottom: 0.75rem; font-size: 0.85rem; font-weight: bold; display: flex; justify-content: space-between; }
         .price-input { width: 80px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; font-size: 0.85rem; text-align: right; }
-        .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); }
+        .footer-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1f2937; color: white; padding: 0.75rem 1rem; display: flex; justify-content: space-between; align-items: center; padding-bottom: calc(0.75rem + env(safe-area-inset-bottom)); z-index: 100; }
         .total-amount { font-size: 1.4rem; font-weight: bold; color: var(--accent); }
         .btn-archive { background: var(--primary); color: white; border: none; padding: 0.8rem 1.25rem; border-radius: 0.75rem; font-weight: bold; }
         .btn-archive:disabled { background: #4b5563; opacity: 0.5; }
@@ -56,7 +67,7 @@
 <body>
 
 <div class="container">
-    <div class="header"><h1>🛒 お買い物メモ</h1></div>
+    <div class="header"><h1>🛒 お買い物プロ</h1></div>
     <div class="tabs">
         <button onclick="switchTab('list')" id="tabList" class="tab-btn tab-active">リスト</button>
         <button onclick="switchTab('history')" id="tabHistory" class="tab-btn">履歴</button>
@@ -72,6 +83,11 @@
             </div>
             <div id="templateContainer" class="template-container"></div>
         </div>
+        
+        <div class="list-header">
+            <span style="font-size:0.75rem; color:var(--text-muted);">名前タップで編集</span>
+            <button onclick="clearChecked()" class="btn-clear-checked">済を削除</button>
+        </div>
         <div id="shoppingList"></div>
     </div>
 
@@ -84,7 +100,7 @@
 </div>
 
 <script>
-    const DB = 'shop_vFinal_Fix';
+    const DB = 'shop_vFinal_Ultimate';
     let items = JSON.parse(localStorage.getItem(DB+'_i')) || [];
     let hist = JSON.parse(localStorage.getItem(DB+'_h')) || [];
     let tpls = JSON.parse(localStorage.getItem(DB+'_t')) || [];
@@ -110,6 +126,22 @@
         save();
     }
 
+    function editItemName(id) {
+        const item = items.find(x => x.id === id);
+        const newName = prompt("名前を修正:", item.text);
+        if (newName && newName.trim()) {
+            item.text = newName.trim();
+            save();
+        }
+    }
+
+    function clearChecked() {
+        if (confirm('チェック済みの項目をリストから削除しますか？（履歴には残りません）')) {
+            items = items.filter(i => !i.checked);
+            save();
+        }
+    }
+
     function startVoice() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) return alert("非対応ブラウザです");
@@ -119,7 +151,7 @@
         rec.onresult = (e) => {
             const res = e.results[0][0].transcript.replace(/[。．]$/, "");
             document.getElementById('itemInput').value = res;
-            toggleButtons(); // ここで「定番」ボタンを出現させる
+            toggleButtons();
         };
         rec.start();
     }
@@ -156,10 +188,10 @@
             return `
                 <div class="item-card">
                     <div class="item-main">
-                        <input type="checkbox" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=!i.checked; save();" style="width:22px;height:22px;">
-                        <span class="item-text" onclick="items.find(x=>x.id===${i.id}).checked=!i.checked; save();">${i.text}</span>
+                        <input type="checkbox" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=!i.checked; save();" style="width:24px;height:24px;">
+                        <span class="item-text" onclick="editItemName(${i.id})">${i.text}</span>
                         <input type="number" inputmode="decimal" class="price-input" placeholder="税抜" value="${i.price||''}" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
-                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;font-size:1.2rem;">✕</button>
+                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;font-size:1.2rem;padding-left:10px;">✕</button>
                     </div>
                     <div class="tax-controls">
                         <button class="tax-btn ${i.tax===8?'active':''}" onclick="items.find(x=>x.id===${i.id}).tax=(i.tax===8?null:8); save();">8%</button>
@@ -189,6 +221,7 @@
                 hList.appendChild(c);
             });
         });
+        if (hist.length === 0) hList.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴はありません</p>';
     }
 
     function saveAsTemplate(text) { if(text && !tpls.includes(text)){ tpls.push(text); save(); document.getElementById('itemInput').value=''; toggleButtons(); } }
