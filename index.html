@@ -60,11 +60,14 @@
         .input-group { display: flex; gap: 0.5rem; align-items: center; }
         input[type="text"] { flex: 1; padding: 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; outline: none; font-size: 16px; }
         
+        .mic-btn { font-size: 1.5rem; background: none; border: none; cursor: pointer; padding: 0 5px; }
+        .mic-btn.recording { animation: pulse 1s infinite; color: #ef4444; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+
         .btn-add { background: var(--primary); color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; font-weight: bold; }
         .btn-template { background: var(--accent); color: white; padding: 0.5rem 0.75rem; border-radius: 0.5rem; border: none; font-size: 0.75rem; }
 
-        .template-section { margin-top: 1rem; border-top: 1px solid var(--bg); padding-top: 0.75rem; }
-        .template-container { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+        .template-container { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 10px; }
         .chip {
             display: flex; align-items: center; gap: 4px; padding: 0.2rem 0.6rem; border-radius: 9999px; font-size: 0.75rem; background: #eff6ff; color: var(--primary); border: 1px solid #dbeafe;
         }
@@ -85,8 +88,13 @@
         .bottom-price-hint { font-size: 0.65rem; color: var(--text-muted); cursor: pointer; text-decoration: underline dotted; }
         .final-price { font-size: 0.75rem; color: var(--accent); font-weight: bold; margin-left: auto; }
 
+        .month-header { 
+            background: var(--text-main); color: var(--white); padding: 0.4rem 1rem; 
+            border-radius: 0.5rem; margin-top: 1.5rem; margin-bottom: 0.75rem; 
+            font-size: 0.85rem; font-weight: bold; display: flex; justify-content: space-between;
+        }
+
         .price-input { width: 80px; padding: 0.4rem; border: 1px solid #e5e7eb; border-radius: 0.25rem; font-size: 0.85rem; text-align: right; }
-        .item-actions { display: flex; gap: 0.2rem; align-items: center; margin-left: 8px; }
         .btn-delete { color: #f87171; border: none; background: none; font-size: 1.2rem; padding: 4px; opacity: 0.4; }
 
         .footer-bar {
@@ -113,10 +121,11 @@
             <div class="card">
                 <div class="input-group">
                     <input type="text" id="itemInput" placeholder="何を買う？" oninput="toggleButtons()">
+                    <button onclick="startVoice()" id="micBtn" class="mic-btn">🎙️</button>
                     <button onclick="addItem()" id="addBtn" class="btn-add">追加</button>
                     <button onclick="saveAsTemplate(document.getElementById('itemInput').value)" id="tplBtn" class="btn-template hidden">定番</button>
                 </div>
-                <div id="templateContainer" class="template-container" style="margin-top:10px;"></div>
+                <div id="templateContainer" class="template-container"></div>
             </div>
 
             <div id="shoppingList"></div>
@@ -137,14 +146,14 @@
     </div>
 
     <script>
-        let items = JSON.parse(localStorage.getItem('shop_items_v6')) || [];
-        let historyGroups = JSON.parse(localStorage.getItem('shop_hist_v6')) || [];
-        let myTemplates = JSON.parse(localStorage.getItem('shop_tpl_v6')) || [];
+        let items = JSON.parse(localStorage.getItem('shop_items_v8')) || [];
+        let historyGroups = JSON.parse(localStorage.getItem('shop_hist_v8')) || [];
+        let myTemplates = JSON.parse(localStorage.getItem('shop_tpl_v8')) || [];
 
         function save() {
-            localStorage.setItem('shop_items_v6', JSON.stringify(items));
-            localStorage.setItem('shop_hist_v6', JSON.stringify(historyGroups));
-            localStorage.setItem('shop_tpl_v6', JSON.stringify(myTemplates));
+            localStorage.setItem('shop_items_v8', JSON.stringify(items));
+            localStorage.setItem('shop_hist_v8', JSON.stringify(historyGroups));
+            localStorage.setItem('shop_tpl_v8', JSON.stringify(myTemplates));
             render();
         }
 
@@ -152,7 +161,6 @@
             return !taxRate ? price : Math.floor(price * (1 + taxRate / 100));
         }
 
-        // 過去の履歴から同じ商品の最新価格（税抜）を探す
         function getPrevPrice(name) {
             for (let group of historyGroups) {
                 let found = group.items.find(i => i.text === name);
@@ -169,6 +177,16 @@
             input.value = '';
             toggleButtons();
             save();
+        }
+
+        function startVoice() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return alert("お使いのブラウザは音声認識に対応していません");
+            const rec = new SpeechRecognition(); rec.lang = 'ja-JP';
+            rec.onstart = () => document.getElementById('micBtn').classList.add('recording');
+            rec.onend = () => document.getElementById('micBtn').classList.remove('recording');
+            rec.onresult = (e) => { document.getElementById('itemInput').value = e.results[0][0].transcript; addItem(); };
+            rec.start();
         }
 
         function updatePrice(id, price) {
@@ -193,23 +211,24 @@
 
             const now = new Date();
             const dateStr = `${now.getMonth() + 1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+            const monthKey = `${now.getFullYear()}年${now.getMonth() + 1}月`;
 
             historyGroups.unshift({
                 id: Date.now(),
                 date: dateStr,
+                monthKey: monthKey,
                 total: total,
                 items: checkedItems.map(i => ({...i, finalPrice: calculateTaxedPrice(i.price, i.tax)}))
             });
 
             items = items.filter(i => !i.checked);
-            if (historyGroups.length > 50) historyGroups.pop();
             save();
         }
 
         function render() {
             const listEl = document.getElementById('shoppingList');
             const tplEl = document.getElementById('templateContainer');
-            let total = 0;
+            let currentTotal = 0;
 
             tplEl.innerHTML = myTemplates.map(t => `
                 <div class="chip" onclick="items.push({id:Date.now(), text:'${t}', checked:false, price:0, tax:null}); save();">
@@ -220,7 +239,7 @@
             listEl.innerHTML = '';
             items.forEach((item) => {
                 const taxed = calculateTaxedPrice(item.price, item.tax);
-                if (item.checked) total += taxed;
+                if (item.checked) currentTotal += taxed;
                 const prevPrice = getPrevPrice(item.text);
                 
                 const div = document.createElement('div');
@@ -241,19 +260,39 @@
                 `;
                 listEl.appendChild(div);
             });
-
-            document.getElementById('totalPrice').innerText = total.toLocaleString();
+            document.getElementById('totalPrice').innerText = currentTotal.toLocaleString();
             
             const histEl = document.getElementById('historyList');
-            histEl.innerHTML = historyGroups.map(g => `
-                <div class="card" style="margin-bottom:1rem; font-size:0.8rem;">
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--bg); padding-bottom:5px; margin-bottom:5px;">
-                        <span>📅 ${g.date}</span><b>合計 ¥${g.total.toLocaleString()}</b>
-                    </div>
-                    ${g.items.map(i => `<div style="display:flex; justify-content:space-between; opacity:0.7;"><span>・${i.text}</span><span>¥${i.finalPrice.toLocaleString()}</span></div>`).join('')}
-                    <div style="text-align:right; margin-top:5px;"><button onclick="deleteGroup(${g.id})" style="background:none; border:none; color:#f87171; font-size:0.7rem;">削除</button></div>
-                </div>
-            `).join('') || '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
+            histEl.innerHTML = '';
+
+            const monthlyData = {};
+            historyGroups.forEach(g => {
+                if (!monthlyData[g.monthKey]) monthlyData[g.monthKey] = { total: 0, groups: [] };
+                monthlyData[g.monthKey].total += g.total;
+                monthlyData[g.monthKey].groups.push(g);
+            });
+
+            Object.keys(monthlyData).forEach(month => {
+                const mHeader = document.createElement('div');
+                mHeader.className = 'month-header';
+                mHeader.innerHTML = `<span>📅 ${month}</span><span>計 ¥${monthlyData[month].total.toLocaleString()}</span>`;
+                histEl.appendChild(mHeader);
+
+                monthlyData[month].groups.forEach(g => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.style.fontSize = '0.8rem';
+                    card.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--bg); padding-bottom:5px; margin-bottom:5px;">
+                            <span style="color:var(--text-muted)">${g.date}</span><b>¥${g.total.toLocaleString()}</b>
+                        </div>
+                        ${g.items.map(i => `<div style="display:flex; justify-content:space-between; opacity:0.7;"><span>・${i.text}</span><span>¥${i.finalPrice.toLocaleString()}</span></div>`).join('')}
+                        <div style="text-align:right; margin-top:5px;"><button onclick="deleteGroup(${g.id})" style="background:none; border:none; color:#f87171; font-size:0.7rem;">削除</button></div>
+                    `;
+                    histEl.appendChild(card);
+                });
+            });
+            if (historyGroups.length === 0) histEl.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴なし</p>';
         }
 
         function saveAsTemplate(text) { if (text && !myTemplates.includes(text)) { myTemplates.push(text); save(); } }
