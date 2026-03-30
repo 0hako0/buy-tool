@@ -72,7 +72,8 @@
 </div>
 
 <script>
-    const KEY = 'SHOP_DATA_V2';
+    // キーを元のV1に戻しました（これで以前のデータが復活します）
+    const KEY = 'SHOP_DATA_FINAL_V1';
     let items = JSON.parse(localStorage.getItem(KEY+'_i')) || [];
     let hist = JSON.parse(localStorage.getItem(KEY+'_h')) || [];
     let tpls = JSON.parse(localStorage.getItem(KEY+'_t')) || [];
@@ -101,12 +102,8 @@
 
     window.toggleVoice = function() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) return alert("音声認識に対応していません");
-        
-        if (recognition) {
-            recognition.stop();
-            return;
-        }
+        if (!SpeechRecognition) return alert("非対応ブラウザです");
+        if (recognition) { recognition.stop(); return; }
 
         recognition = new SpeechRecognition();
         recognition.lang = 'ja-JP';
@@ -116,7 +113,7 @@
         recognition.onresult = (e) => {
             const result = e.results[0][0].transcript.replace(/[。．]$/, "");
             addItem(result);
-            recognition.stop(); // ここで確実に止める
+            recognition.stop();
         };
         recognition.onend = () => {
             btn.classList.remove('recording');
@@ -198,7 +195,7 @@
                     <div style="display:flex; justify-content:space-between; border-bottom:1px solid #4b5563; padding-bottom:8px; margin-bottom:5px;">
                         <span>${g.date}</span><b style="color:var(--accent);">¥${g.total.toLocaleString()}</b>
                     </div>
-                    ${g.items.map(it => `<div onclick="switchTab('list'); addItem('${it.text}')" style="display:flex; justify-content:space-between; padding:6px 0; cursor:pointer;"><span>・${it.text} (${it.qty})</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
+                    ${g.items.map(it => `<div onclick="switchTab('list'); addItem('${it.text}')" style="display:flex; justify-content:space-between; padding:6px 0; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.05);"><span>・${it.text} (${it.qty})</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
                     <div style="text-align:right; margin-top:8px;"><button onclick="if(confirm('削除？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="border:none;background:none;color:#f87171;font-size:0.75rem;">削除</button></div>
                 </div>`;
             });
