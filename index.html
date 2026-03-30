@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>お買い物リスト vFinal</title>
+    <title>お買い物リスト</title>
 
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -49,7 +49,6 @@
         .item-card { display: flex; flex-direction: column; background: var(--white); padding: 0.75rem; border-radius: 0.5rem; margin-bottom: 0.5rem; box-shadow: 0 1px 2px var(--card-shadow); }
         .item-main { display: flex; align-items: center; gap: 0.8rem; }
         .item-text { flex: 1; font-size: 1rem; border-bottom: 1px dashed transparent; min-height: 24px; }
-        .item-text:active { background: #f3f4f6; }
         
         .tax-controls { display: flex; gap: 8px; margin-top: 8px; align-items: center; }
         .tax-btn { font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; border: 1px solid #d1d5db; background: var(--bg); color: var(--text-muted); cursor: pointer; }
@@ -87,7 +86,7 @@
         </div>
         
         <div class="list-header">
-            <span style="font-size:0.75rem; color:var(--text-muted);">名前タップで編集</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">タップで編集</span>
             <button onclick="clearChecked()" class="btn-clear-checked">済を削除</button>
         </div>
         <div id="shoppingList"></div>
@@ -102,16 +101,17 @@
 </div>
 
 <script>
-    const DB = 'shop_vFinal_Standard';
-    let items = JSON.parse(localStorage.getItem(DB+'_i')) || [];
-    let hist = JSON.parse(localStorage.getItem(DB+'_h')) || [];
-    let tpls = JSON.parse(localStorage.getItem(DB+'_t')) || [];
+    // 変数名を一新して競合を回避
+    const SHOP_DB_KEY = 'shop_vFinal_Clean';
+    let shopItems = JSON.parse(localStorage.getItem(SHOP_DB_KEY+'_i')) || [];
+    let shopHistory = JSON.parse(localStorage.getItem(SHOP_DB_KEY+'_h')) || [];
+    let shopTemplates = JSON.parse(localStorage.getItem(SHOP_DB_KEY+'_t')) || [];
 
-    function save() {
-        localStorage.setItem(DB+'_i', JSON.stringify(items));
-        localStorage.setItem(DB+'_h', JSON.stringify(hist));
-        localStorage.setItem(DB+'_t', JSON.stringify(tpls));
-        render();
+    function saveAll() {
+        localStorage.setItem(SHOP_DB_KEY+'_i', JSON.stringify(shopItems));
+        localStorage.setItem(SHOP_DB_KEY+'_h', JSON.stringify(shopHistory));
+        localStorage.setItem(SHOP_DB_KEY+'_t', JSON.stringify(shopTemplates));
+        renderAll();
     }
 
     function toggleButtons() {
@@ -122,25 +122,25 @@
     function addItem() {
         const input = document.getElementById('itemInput');
         if (!input.value.trim()) return;
-        items.push({ id: Date.now(), text: input.value.trim(), checked: false, price: 0, tax: null });
+        shopItems.push({ id: Date.now(), text: input.value.trim(), checked: false, price: 0, tax: null });
         input.value = '';
         toggleButtons();
-        save();
+        saveAll();
     }
 
     function editItemName(id) {
-        const item = items.find(x => x.id === id);
+        const item = shopItems.find(x => x.id === id);
         const newName = prompt("名前を修正:", item.text);
         if (newName && newName.trim()) {
             item.text = newName.trim();
-            save();
+            saveAll();
         }
     }
 
     function clearChecked() {
-        if (confirm('チェック済みの項目をリストから削除しますか？')) {
-            items = items.filter(i => !i.checked);
-            save();
+        if (confirm('チェック済みの項目を削除しますか？')) {
+            shopItems = shopItems.filter(i => !i.checked);
+            saveAll();
         }
     }
 
@@ -151,54 +151,53 @@
         rec.onstart = () => document.getElementById('micBtn').classList.add('recording');
         rec.onend = () => document.getElementById('micBtn').classList.remove('recording');
         rec.onresult = (e) => {
-            const res = e.results[0][0].transcript.replace(/[。．]$/, "");
-            document.getElementById('itemInput').value = res;
+            document.getElementById('itemInput').value = e.results[0][0].transcript.replace(/[。．]$/, "");
             toggleButtons();
         };
         rec.start();
     }
 
     function archiveChecked() {
-        const checked = items.filter(i => i.checked);
+        const checked = shopItems.filter(i => i.checked);
         const total = checked.reduce((s, i) => s + Math.floor(i.price * (1 + (i.tax||0)/100)), 0);
         if (!checked.length || total === 0) return alert("金額入りのチェック済み項目がありません");
         const now = new Date();
-        hist.unshift({
+        shopHistory.unshift({
             id: Date.now(), date: `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`,
             monthKey: `${now.getFullYear()}年${now.getMonth()+1}月`, total: total,
             items: checked.map(i => ({...i, fPrice: Math.floor(i.price * (1 + (i.tax||0)/100))}))
         });
-        items = items.filter(i => !i.checked);
-        save();
+        shopItems = shopItems.filter(i => !i.checked);
+        saveAll();
     }
 
-    function render() {
+    function renderAll() {
         const listEl = document.getElementById('shoppingList');
         const tplEl = document.getElementById('templateContainer');
         let currentTotal = 0;
 
-        tplEl.innerHTML = tpls.map(t => `
-            <div class="chip" onclick="items.push({id:Date.now(), text:'${t}', checked:false, price:0, tax:null}); save();">
-                ＋${t} <span style="margin-left:5px; opacity:0.3" onclick="event.stopPropagation(); tpls=tpls.filter(x=>x!=='${t}'); save();">×</span>
+        tplEl.innerHTML = shopTemplates.map(t => `
+            <div class="chip" onclick="shopItems.push({id:Date.now(), text:'${t}', checked:false, price:0, tax:null}); saveAll();">
+                ＋${t} <span style="margin-left:5px; opacity:0.3" onclick="event.stopPropagation(); shopTemplates=shopTemplates.filter(x=>x!=='${t}'); saveAll();">×</span>
             </div>
         `).join('');
 
-        listEl.innerHTML = items.map(i => {
+        listEl.innerHTML = shopItems.map(i => {
             const taxed = Math.floor(i.price * (1 + (i.tax||0)/100));
             if (i.checked) currentTotal += taxed;
-            const prev = (function(){ for(let g of hist){ let f=g.items.find(x=>x.text===i.text); if(f) return f.price; } return null; })();
+            const prev = (function(){ for(let g of shopHistory){ let f=g.items.find(x=>x.text===i.text); if(f) return f.price; } return null; })();
             return `
                 <div class="item-card">
                     <div class="item-main">
-                        <input type="checkbox" ${i.checked?'checked':''} onchange="items.find(x=>x.id===${i.id}).checked=!i.checked; save();" style="width:24px;height:24px;">
+                        <input type="checkbox" ${i.checked?'checked':''} onchange="shopItems.find(x=>x.id===${i.id}).checked=!${i.checked}; saveAll();" style="width:24px;height:24px;">
                         <span class="item-text" onclick="editItemName(${i.id})">${i.text}</span>
-                        <input type="number" inputmode="decimal" class="price-input" placeholder="税抜" value="${i.price||''}" onchange="items.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; save();">
-                        <button onclick="items=items.filter(x=>x.id!==${i.id}); save();" style="border:none;background:none;color:#f87171;font-size:1.2rem;padding-left:10px;">✕</button>
+                        <input type="number" inputmode="decimal" class="price-input" placeholder="税抜" value="${i.price||''}" onchange="shopItems.find(x=>x.id===${i.id}).price=parseInt(this.value)||0; saveAll();">
+                        <button onclick="shopItems=shopItems.filter(x=>x.id!==${i.id}); saveAll();" style="border:none;background:none;color:#f87171;font-size:1.2rem;padding-left:10px;">✕</button>
                     </div>
                     <div class="tax-controls">
-                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="items.find(x=>x.id===${i.id}).tax=(i.tax===8?null:8); save();">8%</button>
-                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="items.find(x=>x.id===${i.id}).tax=(i.tax===10?null:10); save();">10%</button>
-                        ${prev?`<span class="bottom-price-hint" onclick="items.find(x=>x.id===${i.id}).price=${prev}; save();">前回: ¥${prev}</span>`:''}
+                        <button class="tax-btn ${i.tax===8?'active':''}" onclick="shopItems.find(x=>x.id===${i.id}).tax=(shopItems.find(x=>x.id===${i.id}).tax===8?null:8); saveAll();">8%</button>
+                        <button class="tax-btn ${i.tax===10?'active':''}" onclick="shopItems.find(x=>x.id===${i.id}).tax=(shopItems.find(x=>x.id===${i.id}).tax===10?null:10); saveAll();">10%</button>
+                        ${prev?`<span class="bottom-price-hint" onclick="shopItems.find(x=>x.id===${i.id}).price=${prev}; saveAll();">前回: ¥${prev}</span>`:''}
                         <span class="final-price">税込 ¥${taxed.toLocaleString()}</span>
                     </div>
                 </div>
@@ -206,12 +205,12 @@
         }).join('');
 
         document.getElementById('totalPrice').innerText = currentTotal.toLocaleString();
-        document.getElementById('archiveBtn').disabled = (items.filter(i=>i.checked).length === 0 || currentTotal === 0);
+        document.getElementById('archiveBtn').disabled = (shopItems.filter(i=>i.checked).length === 0 || currentTotal === 0);
         
         const hList = document.getElementById('historyList');
         hList.innerHTML = '';
         const mData = {};
-        hist.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
+        shopHistory.forEach(g => { if(!mData[g.monthKey]) mData[g.monthKey]={t:0, g:[]}; mData[g.monthKey].t+=g.total; mData[g.monthKey].g.push(g); });
         Object.keys(mData).forEach(m => {
             const head = document.createElement('div'); head.className = 'month-header'; head.innerHTML = `<span>📅 ${m}</span><span>計 ¥${mData[m].t.toLocaleString()}</span>`;
             hList.appendChild(head);
@@ -219,14 +218,14 @@
                 const c = document.createElement('div'); c.className = 'card'; c.style.fontSize = '0.8rem';
                 c.innerHTML = `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:5px; margin-bottom:5px;"><span>${g.date}</span><b>¥${g.total.toLocaleString()}</b></div>
                     ${g.items.map(it => `<div style="display:flex; justify-content:space-between; opacity:0.7;"><span>・${it.text}</span><span>¥${it.fPrice.toLocaleString()}</span></div>`).join('')}
-                    <div style="text-align:right; margin-top:5px;"><button onclick="if(confirm('削除？')){hist=hist.filter(x=>x.id!==${g.id});save();}" style="background:none;border:none;color:#f87171;font-size:0.7rem;">削除</button></div>`;
+                    <div style="text-align:right; margin-top:5px;"><button onclick="if(confirm('削除？')){shopHistory=shopHistory.filter(x=>x.id!==${g.id});saveAll();}" style="background:none;border:none;color:#f87171;font-size:0.7rem;">削除</button></div>`;
                 hList.appendChild(c);
             });
         });
-        if (hist.length === 0) hList.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴はありません</p>';
+        if (shopHistory.length === 0) hList.innerHTML = '<p style="text-align:center;color:#9ca3af;padding:2rem;">履歴はありません</p>';
     }
 
-    function saveAsTemplate(text) { if(text && !tpls.includes(text)){ tpls.push(text); save(); document.getElementById('itemInput').value=''; toggleButtons(); } }
+    function saveAsTemplate(text) { if(text && !shopTemplates.includes(text)){ shopTemplates.push(text); saveAll(); document.getElementById('itemInput').value=''; toggleButtons(); } }
     function switchTab(t) { 
         document.getElementById('listView').classList.toggle('hidden', t!=='list');
         document.getElementById('historyView').classList.toggle('hidden', t!=='history');
@@ -234,7 +233,7 @@
         document.getElementById('tabHistory').className = `tab-btn ${t==='history'?'tab-active':''}`;
         document.getElementById('footerBar').classList.toggle('hidden', t!=='list');
     }
-    render();
+    renderAll();
 </script>
 </body>
 </html>
